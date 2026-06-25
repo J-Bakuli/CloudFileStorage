@@ -97,5 +97,9 @@ Started CloudFileStorageApplication
 
 - `src/main/java` — application code
 - `src/main/resources` — configuration files and migrations
+- `src/main/resources/db/migration/` — Flyway SQL migrations (database schema)
 - `docker-compose.yml` — PostgreSQL setup
 - `pom.xml` — Maven dependencies
+
+The database schema is managed by Flyway. Migrations from `db/migration/` are applied automatically when the application 
+starts (after `docker compose up -d`).
