@@ -1,5 +1,6 @@
 package com.jb.cloudstorage.cloud_storage.controller;
 
+import com.jb.cloudstorage.cloud_storage.dto.SignInRequest;
 import com.jb.cloudstorage.cloud_storage.dto.SignUpRequest;
 import com.jb.cloudstorage.cloud_storage.dto.UserResponse;
 import com.jb.cloudstorage.cloud_storage.service.AuthService;
@@ -24,5 +25,10 @@ public class AuthController {
     @PostMapping("/sign-up")
     public UserResponse register(@Valid @RequestBody SignUpRequest request) {
         return authService.register(request);
+    }
+
+    @PostMapping("/sign-in")
+    public UserResponse login(@Valid @RequestBody SignInRequest request) {
+        return authService.login(request);
     }
 }

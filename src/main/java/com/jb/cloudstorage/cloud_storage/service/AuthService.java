@@ -1,7 +1,9 @@
 package com.jb.cloudstorage.cloud_storage.service;
 
+import com.jb.cloudstorage.cloud_storage.dto.SignInRequest;
 import com.jb.cloudstorage.cloud_storage.dto.SignUpRequest;
 import com.jb.cloudstorage.cloud_storage.dto.UserResponse;
+import com.jb.cloudstorage.cloud_storage.exception.InvalidCredentialsException;
 import com.jb.cloudstorage.cloud_storage.exception.UsernameAlreadyExistsException;
 import com.jb.cloudstorage.cloud_storage.model.UserEntity;
 import com.jb.cloudstorage.cloud_storage.repository.UserRepository;
@@ -41,6 +43,25 @@ public class AuthService {
                 new UsernamePasswordAuthenticationToken(
                         signUpRequest.username(),
                         signUpRequest.password()
+                )
+        );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        return new UserResponse(username);
+    }
+
+    public UserResponse login(SignInRequest signInRequest) {
+        String username = signInRequest.username();
+        UserEntity userEntity = userRepository.findByUsername(username);
+
+        if (userEntity == null || !passwordEncoder.matches(signInRequest.password(), userEntity.getPassword())) {
+            throw new InvalidCredentialsException("Invalid username or password");
+        }
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        signInRequest.username(),
+                        signInRequest.password()
                 )
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
