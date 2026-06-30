@@ -5,6 +5,7 @@ import com.jb.cloudstorage.cloud_storage.dto.SignUpRequest;
 import com.jb.cloudstorage.cloud_storage.dto.UserResponse;
 import com.jb.cloudstorage.cloud_storage.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,18 +25,26 @@ public class AuthController {
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/sign-up")
-    public UserResponse register(@Valid @RequestBody SignUpRequest request) {
-        return authService.register(request);
+    public UserResponse register(
+            @Valid @RequestBody SignUpRequest request,
+            HttpServletRequest httpServletRequest,
+            HttpServletResponse httpServletResponse
+    ) {
+        return authService.register(request, httpServletRequest, httpServletResponse);
     }
 
     @PostMapping("/sign-in")
-    public UserResponse login(@Valid @RequestBody SignInRequest request) {
-        return authService.login(request);
+    public UserResponse login(
+            @Valid @RequestBody SignInRequest request,
+            HttpServletRequest httpServletRequest,
+            HttpServletResponse httpServletResponse
+    ) {
+        return authService.login(request, httpServletRequest, httpServletResponse);
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PostMapping("/sign-out")
-    public void logout(HttpServletRequest request) {
-        authService.logout(request);
+    public void logout(HttpServletRequest httpServletRequest) {
+        authService.logout(httpServletRequest);
     }
 }

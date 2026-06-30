@@ -8,12 +8,14 @@ import com.jb.cloudstorage.cloud_storage.exception.UsernameAlreadyExistsExceptio
 import com.jb.cloudstorage.cloud_storage.model.UserEntity;
 import com.jb.cloudstorage.cloud_storage.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,15 +24,22 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final SecurityContextRepository securityContextRepository;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager) {
+    public AuthService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            AuthenticationManager authenticationManager,
+            SecurityContextRepository securityContextRepository
+    ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
+        this.securityContextRepository = securityContextRepository;
     }
 
     @Transactional
-    public UserResponse register(SignUpRequest signUpRequest) {
+    public UserResponse register(SignUpRequest signUpRequest, HttpServletRequest request, HttpServletResponse response) {
         String username = signUpRequest.username();
         UserEntity userEntity = userRepository.findByUsername(username);
 
@@ -48,11 +57,12 @@ public class AuthService {
                 )
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
+        securityContextRepository.saveContext(SecurityContextHolder.getContext(), request, response);
 
         return new UserResponse(username);
     }
 
-    public UserResponse login(SignInRequest signInRequest) {
+    public UserResponse login(SignInRequest signInRequest, HttpServletRequest request, HttpServletResponse response) {
         String username = signInRequest.username();
         UserEntity userEntity = userRepository.findByUsername(username);
 
@@ -67,6 +77,7 @@ public class AuthService {
                 )
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
+        securityContextRepository.saveContext(SecurityContextHolder.getContext(), request, response);
 
         return new UserResponse(username);
     }
