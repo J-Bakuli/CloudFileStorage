@@ -4,6 +4,7 @@ import com.jb.cloudstorage.cloud_storage.dto.SignInRequest;
 import com.jb.cloudstorage.cloud_storage.dto.SignUpRequest;
 import com.jb.cloudstorage.cloud_storage.dto.UserResponse;
 import com.jb.cloudstorage.cloud_storage.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,5 +31,11 @@ public class AuthController {
     @PostMapping("/sign-in")
     public UserResponse login(@Valid @RequestBody SignInRequest request) {
         return authService.login(request);
+    }
+
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PostMapping("/sign-out")
+    public void logout(HttpServletRequest request) {
+        authService.logout(request);
     }
 }

@@ -7,6 +7,8 @@ import com.jb.cloudstorage.cloud_storage.exception.InvalidCredentialsException;
 import com.jb.cloudstorage.cloud_storage.exception.UsernameAlreadyExistsException;
 import com.jb.cloudstorage.cloud_storage.model.UserEntity;
 import com.jb.cloudstorage.cloud_storage.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -67,5 +69,13 @@ public class AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         return new UserResponse(username);
+    }
+
+    public void logout(HttpServletRequest request) {
+        SecurityContextHolder.clearContext();
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
     }
 }
