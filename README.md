@@ -85,6 +85,9 @@ Expected log message:
 Started CloudFileStorageApplication
 ```
 
+## Swagger
+http://localhost:8080/swagger-ui/index.html#/
+
 ## Environment variables
 
 | Variable            | Description   |
