@@ -32,7 +32,7 @@ cd CloudFileStorage
 
 ### 2. Configure local environment
 
-Create a `.env` file in the project root:
+Create a `.env` file in the project root (for Docker Compose):
 
 ```env
 POSTGRES_DB=cloud_storage
@@ -40,7 +40,7 @@ POSTGRES_USER=your_user
 POSTGRES_PASSWORD=your_password
 ```
 
-Create `src/main/resources/application-local.properties`:
+Create `src/main/resources/application-local.properties` manually after clone (file is in `.gitignore`):
 
 ```properties
 spring.datasource.url=jdbc:postgresql://localhost:5433/cloud_storage
@@ -48,7 +48,7 @@ spring.datasource.username=your_user
 spring.datasource.password=your_password
 ```
 
-> Do **not** commit `.env` or `application-local.properties` — they are listed in `.gitignore`.
+Use the same database name, username, and password as in `.env`.
 
 ### 3. Start PostgreSQL
 
@@ -67,16 +67,22 @@ You should see `cloud_storage_db`.
 
 ### 4. Run the application
 
-**IntelliJ IDEA:** run `CloudFileStorageApplication`
+Activate the `local` profile so Spring loads `application-local.properties`.
+
+**IntelliJ IDEA:** run `CloudFileStorageApplication` — in **Run → Edit Configurations → Program arguments**:
+
+```text
+--spring.profiles.active=local
+```
 
 **Maven:**
 
 ```bash
 # Windows
-mvnw.cmd spring-boot:run
+mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=local
 
 # Linux / macOS
-./mvnw spring-boot:run
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
 Expected log message:
@@ -87,14 +93,6 @@ Started CloudFileStorageApplication
 
 ## Swagger
 http://localhost:8080/swagger-ui/index.html#/
-
-## Environment variables
-
-| Variable            | Description   |
-|---------------------|---------------|
-| `POSTGRES_DB`       | Database name |
-| `POSTGRES_USER`     | DB user       |
-| `POSTGRES_PASSWORD` | DB password   |
 
 ## Project structure
 
