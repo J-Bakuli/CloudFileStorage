@@ -11,6 +11,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -139,15 +141,9 @@ public class AuthApiIntegrationTest {
 
     @Test
     void testSignIn_success() throws Exception {
-        basicSignUp();
-
-        SignInRequest signInRequest = new SignInRequest(BASIC_USERNAME, BASIC_PASSWORD);
-        mockMvc.perform(
-                        post("/api/auth/sign-in")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(signInRequest)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username", is(BASIC_USERNAME)));
+        MockHttpSession session = new MockHttpSession();
+        basicSignUp(session);
+        basicSignIn(session);
     }
 
     @Test
@@ -164,7 +160,8 @@ public class AuthApiIntegrationTest {
 
     @Test
     void testSignIn_wrongPassword() throws Exception {
-        basicSignUp();
+        MockHttpSession session = new MockHttpSession();
+        basicSignUp(session);
 
         String password = "AAAAAAAAAAAA";
         SignInRequest signInRequest = new SignInRequest(BASIC_USERNAME, password);
@@ -176,12 +173,58 @@ public class AuthApiIntegrationTest {
                 .andExpect(jsonPath("$.message", is("Invalid username or password")));
     }
 
-    private void basicSignUp() throws Exception {
+    @Test
+    void testSignOut_UserMe_success() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        basicSignUp(session);
+        basicSignIn(session);
+
+        mockMvc.perform(
+                        get("/api/user/me")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username", is(BASIC_USERNAME)));
+
+        mockMvc.perform(
+                        post("/api/auth/sign-out")
+                                .session(session)
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(
+                        get("/api/user/me")
+                                .session(session))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void testUserMe_unauthenticated() throws Exception {
+        mockMvc.perform(
+                        get("/api/user/me"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    private void basicSignUp(MockHttpSession session) throws Exception {
         SignUpRequest signUpRequest = new SignUpRequest(BASIC_USERNAME, BASIC_PASSWORD);
         mockMvc.perform(
                         post("/api/auth/sign-up")
+                                .session(session)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(signUpRequest)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.username", is(BASIC_USERNAME)));
+        ;
+    }
+
+    private void basicSignIn(MockHttpSession session) throws Exception {
+        SignInRequest signInRequest = new SignInRequest(BASIC_USERNAME, BASIC_PASSWORD);
+        mockMvc.perform(
+                        post("/api/auth/sign-in")
+                                .session(session)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(signInRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username", is(BASIC_USERNAME)));
+        ;
     }
 }
