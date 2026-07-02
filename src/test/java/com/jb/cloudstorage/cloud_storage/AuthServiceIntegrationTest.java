@@ -25,7 +25,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 @Testcontainers
 @SpringBootTest
 @Transactional
-class AuthServiceIntegrationTest {
+public class AuthServiceIntegrationTest {
     @ServiceConnection
     @Container
     static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:16");
