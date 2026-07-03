@@ -4,6 +4,7 @@ import com.jb.cloudstorage.cloud_storage.dto.ResourceResponse;
 import com.jb.cloudstorage.cloud_storage.model.ResourceType;
 import com.jb.cloudstorage.cloud_storage.model.UserEntity;
 import com.jb.cloudstorage.cloud_storage.repository.UserRepository;
+import com.jb.cloudstorage.cloud_storage.util.FileUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,7 +31,7 @@ public class ResourceService {
 
     private ResourceResponse buildResponse(String folderPath, MultipartFile file) {
         return new ResourceResponse(
-                folderPath,
+                FileUtils.normalizeParentPath(folderPath),
                 file.getOriginalFilename(),
                 file.getSize(),
                 ResourceType.FILE

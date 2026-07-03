@@ -1,6 +1,7 @@
 package com.jb.cloudstorage.cloud_storage.service;
 
 import com.jb.cloudstorage.cloud_storage.config.MinioProperties;
+import com.jb.cloudstorage.cloud_storage.util.FileUtils;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
@@ -42,7 +43,7 @@ public class FileStorageService {
     public void uploadFile(Long userId, String relativePath, MultipartFile file) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
         ensureBucketExists();
 
-        String objectPath = joinPath(relativePath, file.getOriginalFilename());
+        String objectPath = FileUtils.joinPath(relativePath, file.getOriginalFilename());
         String objectName = fullObjectName(userId, objectPath);
 
         minioClient.putObject(PutObjectArgs.builder()
@@ -59,13 +60,5 @@ public class FileStorageService {
 
     private String fullObjectName(Long userId, String objectRelativePath) {
         return userRootPrefix(userId) + objectRelativePath;
-    }
-
-    private String joinPath(String folderPath, String fileName) {
-        if (folderPath == null || folderPath.isBlank()) {
-            return fileName;
-        }
-        String normalized = folderPath.endsWith("/") ? folderPath : folderPath + "/";
-        return normalized + fileName;
     }
 }
