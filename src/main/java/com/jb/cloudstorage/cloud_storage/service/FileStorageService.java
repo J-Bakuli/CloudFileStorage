@@ -39,7 +39,7 @@ public class FileStorageService {
         }
     }
 
-    public String uploadFile(Long userId, String relativePath, MultipartFile file) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    public void uploadFile(Long userId, String relativePath, MultipartFile file) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
         ensureBucketExists();
 
         String objectPath = joinPath(relativePath, file.getOriginalFilename());
@@ -51,7 +51,6 @@ public class FileStorageService {
                 .stream(file.getInputStream(), file.getSize(), -1)
                 .contentType(file.getContentType())
                 .build());
-        return objectName;
     }
 
     private String userRootPrefix(Long userId) {
