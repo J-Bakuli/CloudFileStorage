@@ -29,7 +29,7 @@
     <properties>
         <java.version>17</java.version>
         <spring-doc.version>2.8.17</spring-doc.version>
-        <minio.version>8.6.0</minio.version>
+        <minio.version>8.5.17</minio.version>
         <testcontainers-bom.version>2.0.5</testcontainers-bom.version>
     </properties>
     <dependencyManagement>
