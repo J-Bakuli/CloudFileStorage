@@ -12,6 +12,7 @@ This is a learning backend project built with Java and Spring Boot.
 - Spring Boot
 - Maven
 - PostgreSQL
+- MinIO (S3-compatible storage)
 - Docker / Docker Compose
 
 ## Requirements
@@ -38,6 +39,8 @@ Create a `.env` file in the project root (for Docker Compose):
 POSTGRES_DB=cloud_storage
 POSTGRES_USER=your_user
 POSTGRES_PASSWORD=your_password
+MINIO_ROOT_USER=your_minio_user
+MINIO_ROOT_PASSWORD=your_minio_password
 ```
 
 Create `src/main/resources/application-local.properties` manually after clone (file is in `.gitignore`):
@@ -46,43 +49,40 @@ Create `src/main/resources/application-local.properties` manually after clone (f
 spring.datasource.url=jdbc:postgresql://localhost:5433/cloud_storage
 spring.datasource.username=your_user
 spring.datasource.password=your_password
+minio.access-key=your_minio_user
+minio.secret-key=your_minio_password
 ```
 
-Use the same database name, username, and password as in `.env`.
+Use the same database name, username, and password as in `.env`. MinIO credentials must match `MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD`.
 
-### 3. Start PostgreSQL
+### 3. Start PostgreSQL and MinIO
 
 ```bash
 docker compose up -d
 ```
 
-- Host port: `5433` (container port: `5432`)
-- Check that the container is running:
+- PostgreSQL host port: `5433` (container port: `5432`)
+- MinIO API: `http://localhost:9000`
+- MinIO Console: `http://localhost:9001`
+
+Check that containers are running:
 
 ```bash
 docker ps
 ```
 
-You should see `cloud_storage_db`.
+You should see `cloud_storage_db` and `cloud_storage_minio`.
 
 ### 4. Run the application
 
-Activate the `local` profile so Spring loads `application-local.properties`.
-
-**IntelliJ IDEA:** run `CloudFileStorageApplication` — in **Run → Edit Configurations → Program arguments**:
-
-```text
---spring.profiles.active=local
-```
-
-**Maven:**
+Run `CloudFileStorageApplication` from your IDE or:
 
 ```bash
 # Windows
-mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=local
+mvnw.cmd spring-boot:run
 
 # Linux / macOS
-./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+./mvnw spring-boot:run
 ```
 
 Expected log message:
@@ -99,8 +99,7 @@ http://localhost:8080/swagger-ui/index.html#/
 - `src/main/java` — application code
 - `src/main/resources` — configuration files and migrations
 - `src/main/resources/db/migration/` — Flyway SQL migrations (database schema)
-- `docker-compose.yml` — PostgreSQL setup
+- `docker-compose.yml` — PostgreSQL and MinIO
 - `pom.xml` — Maven dependencies
 
-The database schema is managed by Flyway. Migrations from `db/migration/` are applied automatically when the application 
-starts (after `docker compose up -d`).
+The database schema is managed by Flyway. Migrations from `db/migration/` are applied automatically when the application starts (after `docker compose up -d`).
