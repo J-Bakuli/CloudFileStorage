@@ -2,8 +2,10 @@ package com.jb.cloudstorage.cloud_storage.exception;
 
 import com.jb.cloudstorage.cloud_storage.dto.ApiErrorResponse;
 import com.jb.cloudstorage.cloud_storage.dto.ApiFieldError;
+import io.minio.errors.ErrorResponseException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -49,6 +51,22 @@ public class GlobalExceptionHandler {
                 request.getRequestURI(),
                 errors
         );
+    }
+
+    @ExceptionHandler(ErrorResponseException.class)
+    public ResponseEntity<ApiErrorResponse> handleErrorResponseException(ErrorResponseException ex, HttpServletRequest request) {
+        if ("NoSuchKey".equals(ex.errorResponse().code())) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(buildError(
+                    HttpStatus.NOT_FOUND,
+                    "Resource not found",
+                    request.getRequestURI(),
+                    List.of()));
+        }
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(buildError(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Storage error",
+                request.getRequestURI(),
+                List.of()));
     }
 
     private ApiErrorResponse buildError(
