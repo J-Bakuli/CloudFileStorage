@@ -1,10 +1,9 @@
 package com.jb.cloudstorage.cloud_storage.util;
 
-public final class FileUtils {
-    private FileUtils() {
-        throw new UnsupportedOperationException("Utility class cannot be instantiated");
-    }
+import lombok.experimental.UtilityClass;
 
+@UtilityClass
+public class FileUtils {
     public static String normalizeParentPath(String folderPath) {
         if (folderPath == null || folderPath.isBlank()) {
             return "";
