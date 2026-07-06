@@ -6,6 +6,7 @@ import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.StatObjectArgs;
 import io.minio.errors.MinioException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -52,6 +53,19 @@ public class FileStorageService {
                 .stream(file.getInputStream(), file.getSize(), -1)
                 .contentType(file.getContentType())
                 .build());
+    }
+
+    public Long getObjectSize(Long userId, String fullPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+        ensureBucketExists();
+
+        String objectName = fullObjectName(userId, fullPath);
+
+        return minioClient.statObject(
+                StatObjectArgs.builder()
+                        .bucket(minioProperties.bucket())
+                        .object(objectName)
+                        .build()
+        ).size();
     }
 
     private String userRootPrefix(Long userId) {

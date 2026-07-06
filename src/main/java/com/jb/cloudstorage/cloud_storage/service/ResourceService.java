@@ -21,6 +21,23 @@ public class ResourceService {
         this.fileStorageService = fileStorageService;
     }
 
+    public ResourceResponse get(String fullPath) throws Exception {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity user = userRepository.findByUsername(username);
+        Long userId = user.getId();
+
+        FileUtils.PathParts pathParts = FileUtils.splitPath(fullPath);
+
+        Long size = pathParts.type() == ResourceType.FILE
+                ? fileStorageService.getObjectSize(userId, fullPath)
+                : null;
+        return new ResourceResponse(
+                pathParts.parentPath(),
+                pathParts.name(),
+                size,
+                pathParts.type());
+    }
+
     public List<ResourceResponse> upload(String folderPath, MultipartFile file) throws Exception { //Todo remove throwing Exception later
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         UserEntity user = userRepository.findByUsername(username);

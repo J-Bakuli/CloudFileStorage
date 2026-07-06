@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -38,5 +39,16 @@ public class ResourceController {
             @RequestPart("file") MultipartFile file
     ) throws Exception {
         return resourceService.upload(path, file);
+    }
+
+    @Operation(summary = "Get resource info")
+    @ApiResponse(responseCode = "400", description = "Invalid or missing path")
+    @ApiResponse(responseCode = "401", description = "Unauthorized access")
+    @ApiResponse(responseCode = "404", description = "Resource is not found")
+    @GetMapping
+    public ResourceResponse get(
+            @RequestParam("path") String path
+    ) throws Exception {
+        return resourceService.get(path);
     }
 }
