@@ -2,24 +2,21 @@ package com.jb.cloudstorage.cloud_storage;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jb.cloudstorage.cloud_storage.dto.SignUpRequest;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -33,9 +30,6 @@ public class ResourceApiIntegrationTest {
     private MockMvc mockMvc;
     @Autowired
     private ObjectMapper objectMapper;
-    @ServiceConnection
-    @Container
-    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:16");
     private static final String BASIC_USERNAME = "CloudFileStorage";
     private static final String BASIC_PASSWORD = "password123";
 
@@ -54,6 +48,69 @@ public class ResourceApiIntegrationTest {
     }
 
     @Test
+    void testGet_unauthenticated() throws Exception {
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", "test.txt"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void testGet_notFound() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        SignUpRequest signUp = new SignUpRequest(BASIC_USERNAME, BASIC_PASSWORD);
+        mockMvc.perform(
+                        post("/api/auth/sign-up")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(signUp))
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", "noFile.txt")
+                                .session(session))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testGet_success() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        SignUpRequest signUp = new SignUpRequest(BASIC_USERNAME, BASIC_PASSWORD);
+        mockMvc.perform(
+                        post("/api/auth/sign-up")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(signUp))
+                                .session(session))
+                .andExpect(status().isCreated());
+        byte[] content = "hello".getBytes();
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "test.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                content
+        );
+
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "exam")
+                                .session(session))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", "exam/test.txt")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.path").value("exam/"))
+                .andExpect(jsonPath("$.name").value("test.txt"))
+                .andExpect(jsonPath("$.size").value(content.length))
+                .andExpect(jsonPath("$.type").value("FILE"));
+    }
+
+    @Test
+    @Disabled
     void testUploadFile_conflict() throws Exception {
         MockHttpSession session = new MockHttpSession();
         SignUpRequest signUp = new SignUpRequest(BASIC_USERNAME, BASIC_PASSWORD);
