@@ -22,7 +22,7 @@ public class DirectoryController {
         this.resourceService = resourceService;
     }
 
-    @Operation(summary = "Get directory info")
+    @Operation(summary = "Get directory content")
     @ApiResponse(responseCode = "400", description = "Invalid or missing path")
     @ApiResponse(responseCode = "401", description = "Unauthorized access")
     @ApiResponse(responseCode = "404", description = "Resource is not found")
