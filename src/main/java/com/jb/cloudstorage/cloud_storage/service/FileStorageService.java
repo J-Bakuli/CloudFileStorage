@@ -9,12 +9,14 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.Result;
 import io.minio.StatObjectArgs;
+import io.minio.errors.ErrorResponseException;
 import io.minio.errors.MinioException;
 import io.minio.messages.Item;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -58,6 +60,33 @@ public class FileStorageService {
                 .stream(file.getInputStream(), file.getSize(), -1)
                 .contentType(file.getContentType())
                 .build());
+    }
+
+    public void createDirectory(Long userId, String folderPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+        ensureBucketExists();
+        minioClient.putObject(PutObjectArgs.builder()
+                .bucket(minioProperties.bucket())
+                .object(fullObjectName(userId, folderPath))
+                .stream(InputStream.nullInputStream(), 0, 0)
+                .contentType(null)
+                .build());
+    }
+
+    public boolean objectExists(Long userId, String directoryPath) throws Exception {
+        try {
+            minioClient.statObject(
+                    StatObjectArgs.builder()
+                            .bucket(minioProperties.bucket())
+                            .object(fullObjectName(userId, directoryPath))
+                            .build()
+            );
+            return true;
+        } catch (ErrorResponseException e) {
+            if ("NoSuchKey".equals(e.errorResponse().code())) {
+                return false;
+            }
+            throw e;
+        }
     }
 
     public Long getObjectSize(Long userId, String fullPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {

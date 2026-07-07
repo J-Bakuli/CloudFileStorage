@@ -1,6 +1,8 @@
 package com.jb.cloudstorage.cloud_storage.service;
 
 import com.jb.cloudstorage.cloud_storage.dto.ResourceResponse;
+import com.jb.cloudstorage.cloud_storage.exception.DirectoryAlreadyExistsException;
+import com.jb.cloudstorage.cloud_storage.exception.ResourceNotFoundException;
 import com.jb.cloudstorage.cloud_storage.model.ResourceType;
 import com.jb.cloudstorage.cloud_storage.model.UserEntity;
 import com.jb.cloudstorage.cloud_storage.repository.UserRepository;
@@ -10,7 +12,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -54,6 +55,44 @@ public class ResourceService {
         Long userId = user.getId();
         fileStorageService.uploadFile(userId, folderPath, file);
         return List.of(buildResponse(folderPath, file));
+    }
+
+    public ResourceResponse createDirectory(String directoryPath) throws Exception {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity user = userRepository.findByUsername(username);
+        Long userId = user.getId();
+        String normalizedPath = FileUtils.normalizeParentPath(directoryPath);
+
+        FileUtils.PathParts parts = FileUtils.splitPath(normalizedPath);
+        String parentPath = parts.parentPath();
+
+        if (fileStorageService.objectExists(userId, normalizedPath)) {
+            throw new DirectoryAlreadyExistsException(String.format("Directory with path=%s already exists", directoryPath));
+        }
+
+        if (!parentExists(userId, parentPath)) {
+            throw new ResourceNotFoundException(String.format("Parent directory with path=%s not found", parentPath));
+        }
+
+        fileStorageService.createDirectory(userId, normalizedPath);
+
+        return new ResourceResponse(
+                parts.parentPath(),
+                parts.name(),
+                null,
+                ResourceType.DIRECTORY);
+    }
+
+    private boolean parentExists(Long userId, String parentPath) throws Exception {
+        if (parentPath.isBlank()) {
+            return true;
+        }
+
+        if (fileStorageService.objectExists(userId, parentPath)) {
+            return true;
+        }
+
+        return !fileStorageService.listObjects(userId, parentPath).isEmpty();
     }
 
     private ResourceResponse buildResponse(String folderPath, MultipartFile file) {
