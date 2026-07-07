@@ -22,7 +22,7 @@ public class GlobalExceptionHandler {
         return buildError(
                 HttpStatus.UNAUTHORIZED,
                 ex.getMessage(),
-                request.getPathInfo(),
+                request.getRequestURI(),
                 List.of());
     }
 
@@ -32,7 +32,27 @@ public class GlobalExceptionHandler {
         return buildError(
                 HttpStatus.CONFLICT,
                 ex.getMessage(),
-                request.getPathInfo(),
+                request.getRequestURI(),
+                List.of());
+    }
+
+    @ExceptionHandler(DirectoryAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiErrorResponse handleDirectoryAlreadyExistsException(DirectoryAlreadyExistsException ex, HttpServletRequest request) {
+        return buildError(
+                HttpStatus.CONFLICT,
+                ex.getMessage(),
+                request.getRequestURI(),
+                List.of());
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiErrorResponse handleResourceNotFoundException(ResourceNotFoundException ex, HttpServletRequest request) {
+        return buildError(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage(),
+                request.getRequestURI(),
                 List.of());
     }
 
