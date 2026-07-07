@@ -144,4 +144,56 @@ public class ResourceApiIntegrationTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("already exists")));
     } //Todo test fails now, TDD, check later
+
+    @Test
+    void testGetDirectory_unauthenticated() throws Exception {
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "test"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void testGetDirectory_success() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        SignUpRequest signUp = new SignUpRequest(BASIC_USERNAME, BASIC_PASSWORD);
+        mockMvc.perform(
+                        post("/api/auth/sign-up")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(signUp))
+                                .session(session))
+                .andExpect(status().isCreated());
+        byte[] content = "hello".getBytes();
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "test.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                content
+        );
+
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "exam")
+                                .session(session))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", "exam/test.txt")
+                                .session(session))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "exam/")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].path").value("exam/"))
+                .andExpect(jsonPath("$[0].name").value("test.txt"))
+                .andExpect(jsonPath("$[0].size").value(content.length))
+                .andExpect(jsonPath("$[0].type").value("FILE"));
+    }
 }
