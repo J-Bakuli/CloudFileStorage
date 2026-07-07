@@ -23,6 +23,7 @@ public class DirectoryController {
     }
 
     @Operation(summary = "Get directory content")
+    @ApiResponse(responseCode = "200", description = "Directory content returned")
     @ApiResponse(responseCode = "400", description = "Invalid or missing path")
     @ApiResponse(responseCode = "401", description = "Unauthorized access")
     @ApiResponse(responseCode = "404", description = "Resource is not found")
