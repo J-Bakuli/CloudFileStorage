@@ -68,7 +68,7 @@ public class FileStorageService {
                 .bucket(minioProperties.bucket())
                 .object(fullObjectName(userId, folderPath))
                 .stream(InputStream.nullInputStream(), 0, 0)
-                .contentType(null)
+                .contentType("application/octet-stream")
                 .build());
     }
 
