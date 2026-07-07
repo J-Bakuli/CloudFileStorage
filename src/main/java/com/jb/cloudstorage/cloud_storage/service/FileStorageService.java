@@ -3,17 +3,22 @@ package com.jb.cloudstorage.cloud_storage.service;
 import com.jb.cloudstorage.cloud_storage.config.MinioProperties;
 import com.jb.cloudstorage.cloud_storage.util.FileUtils;
 import io.minio.BucketExistsArgs;
+import io.minio.ListObjectsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.Result;
 import io.minio.StatObjectArgs;
 import io.minio.errors.MinioException;
+import io.minio.messages.Item;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class FileStorageService {
@@ -74,5 +79,30 @@ public class FileStorageService {
 
     private String fullObjectName(Long userId, String objectRelativePath) {
         return userRootPrefix(userId) + objectRelativePath;
+    }
+
+    public String buildUserObjectPrefix(Long userId, String directoryPath) {
+        String normalizedPath = FileUtils.normalizeParentPath(directoryPath);
+        return fullObjectName(userId, normalizedPath);
+    }
+
+    public List<Item> listObjects(Long userId, String directoryPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+        ensureBucketExists();
+
+        String prefix = buildUserObjectPrefix(userId, directoryPath);
+
+        Iterable<Result<Item>> results = minioClient.listObjects(
+                ListObjectsArgs.builder()
+                        .bucket(minioProperties.bucket())
+                        .prefix(prefix)
+                        .recursive(false)
+                        .build()
+        );
+
+        List<Item> items = new ArrayList<>();
+        for (Result<Item> result : results) {
+            items.add(result.get());
+        }
+        return items;
     }
 }
