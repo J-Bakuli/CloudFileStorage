@@ -50,7 +50,7 @@ public class ResourceService {
             throw new ResourceNotFoundException(String.format("Parent directory is not found, path=%s", normalizedPath));
         }
 
-        List<Item> objects = fileStorageService.listObjects(userId, fullPath);
+        List<Item> objects = fileStorageService.listObjects(userId, normalizedPath);
         return buildResponse(userId, objects);
     }
 
