@@ -30,7 +30,7 @@ public class FileUtils {
         return new PathParts(parentPath, resourceName, resourceType);
     }
 
-    private ResourceType getResourceType(String fullPath) {
+    public static ResourceType getResourceType(String fullPath) {
         return fullPath.endsWith("/") ? ResourceType.DIRECTORY : ResourceType.FILE;
     }
 
