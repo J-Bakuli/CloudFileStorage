@@ -2,6 +2,7 @@ package com.jb.cloudstorage.cloud_storage.service;
 
 import com.jb.cloudstorage.cloud_storage.dto.ResourceResponse;
 import com.jb.cloudstorage.cloud_storage.exception.DirectoryAlreadyExistsException;
+import com.jb.cloudstorage.cloud_storage.exception.FileAlreadyExistsException;
 import com.jb.cloudstorage.cloud_storage.exception.ResourceNotFoundException;
 import com.jb.cloudstorage.cloud_storage.model.ResourceType;
 import com.jb.cloudstorage.cloud_storage.model.UserEntity;
@@ -53,6 +54,12 @@ public class ResourceService {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         UserEntity user = userRepository.findByUsername(username);
         Long userId = user.getId();
+
+        String objectPath = FileUtils.joinPath(folderPath, file.getOriginalFilename());
+        if (fileStorageService.objectExists(userId, objectPath)) {
+            throw new FileAlreadyExistsException(String.format("File already exists, path=%s", objectPath));
+        }
+
         fileStorageService.uploadFile(userId, folderPath, file);
         return List.of(buildResponse(folderPath, file));
     }
@@ -67,7 +74,7 @@ public class ResourceService {
         String parentPath = parts.parentPath();
 
         if (fileStorageService.objectExists(userId, normalizedPath)) {
-            throw new DirectoryAlreadyExistsException(String.format("Directory with path=%s already exists", directoryPath));
+            throw new DirectoryAlreadyExistsException(String.format("Directory already exists, path=%s", directoryPath));
         }
 
         if (!parentExists(userId, parentPath)) {

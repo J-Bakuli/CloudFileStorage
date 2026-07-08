@@ -75,7 +75,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testUploadFile_conflict() throws Exception {
         basicSignUp(session);
 
@@ -100,5 +99,5 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                                 .session(session))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("already exists")));
-    } //Todo test fails now, TDD, check later
+    }
 }

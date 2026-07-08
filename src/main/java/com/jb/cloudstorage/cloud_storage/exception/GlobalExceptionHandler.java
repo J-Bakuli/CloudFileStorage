@@ -46,6 +46,16 @@ public class GlobalExceptionHandler {
                 List.of());
     }
 
+    @ExceptionHandler(FileAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiErrorResponse handleFileAlreadyExistsException(FileAlreadyExistsException ex, HttpServletRequest request) {
+        return buildError(
+                HttpStatus.CONFLICT,
+                ex.getMessage(),
+                request.getRequestURI(),
+                List.of());
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleResourceNotFoundException(ResourceNotFoundException ex, HttpServletRequest request) {
