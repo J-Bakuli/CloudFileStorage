@@ -47,7 +47,7 @@ public class ResourceService {
         String normalizedPath = FileUtils.normalizeParentPath(fullPath);
 
         if (!parentExists(userId, normalizedPath)) {
-            throw new ResourceNotFoundException(String.format("Parent directory is not found, path=%s", normalizedPath));
+            throw new ResourceNotFoundException(String.format("Directory is not found, path=%s", normalizedPath));
         }
 
         List<Item> objects = fileStorageService.listObjects(userId, normalizedPath);
