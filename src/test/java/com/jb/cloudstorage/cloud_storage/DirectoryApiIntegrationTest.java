@@ -9,7 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest{
+public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
     @Test
     void testGetDirectory_success() throws Exception {
         basicSignUp(session);
@@ -53,6 +53,16 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest{
                         get("/api/directory")
                                 .param("path", "exam/"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void testGetDirectory_notFound() throws Exception {
+        basicSignUp(session);
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "missing/")
+                                .session(session))
+                .andExpect(status().isNotFound());
     }
 
     @Test
