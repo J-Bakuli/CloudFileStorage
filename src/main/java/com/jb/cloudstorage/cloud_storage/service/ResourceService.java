@@ -46,6 +46,13 @@ public class ResourceService {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         UserEntity user = userRepository.findByUsername(username);
         Long userId = user.getId();
+
+        String normalizedPath = FileUtils.normalizeParentPath(fullPath);
+
+        if (!parentExists(userId, normalizedPath)) {
+            throw new ResourceNotFoundException(String.format("Parent directory is not found, path=%s", normalizedPath));
+        }
+
         List<Item> objects = fileStorageService.listObjects(userId, fullPath);
         return buildResponse(userId, objects);
     }
@@ -88,6 +95,18 @@ public class ResourceService {
                 parts.name(),
                 null,
                 ResourceType.DIRECTORY);
+    }
+
+    public void delete(String resourcePath) throws Exception {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity user = userRepository.findByUsername(username);
+        Long userId = user.getId();
+
+        if (!fileStorageService.objectExists(userId, resourcePath)) {
+            throw new ResourceNotFoundException(String.format("Resource is not found, path=%s", resourcePath));
+        }
+
+        fileStorageService.delete(userId, resourcePath);
     }
 
     private boolean parentExists(Long userId, String parentPath) throws Exception {

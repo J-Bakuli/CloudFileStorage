@@ -1,17 +1,20 @@
 package com.jb.cloudstorage.cloud_storage.service;
 
 import com.jb.cloudstorage.cloud_storage.config.MinioProperties;
+import com.jb.cloudstorage.cloud_storage.model.ResourceType;
 import com.jb.cloudstorage.cloud_storage.util.FileUtils;
 import io.minio.BucketExistsArgs;
 import io.minio.ListObjectsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.RemoveObjectArgs;
 import io.minio.Result;
 import io.minio.StatObjectArgs;
 import io.minio.errors.ErrorResponseException;
 import io.minio.errors.MinioException;
 import io.minio.messages.Item;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,6 +25,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 public class FileStorageService {
     private final MinioProperties minioProperties;
@@ -100,6 +104,42 @@ public class FileStorageService {
                         .object(objectName)
                         .build()
         ).size();
+    }
+
+    public void delete(Long userId, String resourcePath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+        ensureBucketExists();
+
+        ResourceType type = FileUtils.getResourceType(resourcePath);
+
+        if (type == ResourceType.FILE) {
+            minioClient.removeObject(RemoveObjectArgs.builder()
+                    .bucket(minioProperties.bucket())
+                    .object(fullObjectName(userId, resourcePath))
+                    .build());
+        } else {
+            deleteRecursively(userId, resourcePath);
+        }
+    }
+
+    private void deleteRecursively(Long userId, String resourcePath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+        String normalizedPath = FileUtils.normalizeParentPath(resourcePath);
+        String prefix = buildUserObjectPrefix(userId, normalizedPath);
+
+        Iterable<Result<Item>> results = minioClient.listObjects(
+                ListObjectsArgs.builder()
+                        .bucket(minioProperties.bucket())
+                        .prefix(prefix)
+                        .recursive(true)
+                        .build()
+        );
+
+        for (Result<Item> result : results) {
+            minioClient.removeObject(RemoveObjectArgs.builder()
+                    .bucket(minioProperties.bucket())
+                    .object(result.get().objectName())
+                    .build()
+            );
+        }
     }
 
     private String userRootPrefix(Long userId) {

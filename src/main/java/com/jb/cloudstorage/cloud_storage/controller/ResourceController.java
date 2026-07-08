@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -51,5 +52,18 @@ public class ResourceController {
             @RequestParam("path") String path
     ) throws Exception {
         return resourceService.get(path);
+    }
+
+    @Operation(summary = "Delete resource")
+    @ApiResponse(responseCode = "204", description = "Success, no content")
+    @ApiResponse(responseCode = "400", description = "Invalid or missing path")
+    @ApiResponse(responseCode = "401", description = "Unauthorized access")
+    @ApiResponse(responseCode = "404", description = "Resource is not found")
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(
+            @RequestParam("path") String path
+    ) throws Exception {
+        resourceService.delete(path);
     }
 }
