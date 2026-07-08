@@ -3,6 +3,7 @@ package com.jb.cloudstorage.cloud_storage.service;
 import com.jb.cloudstorage.cloud_storage.dto.ResourceResponse;
 import com.jb.cloudstorage.cloud_storage.exception.DirectoryAlreadyExistsException;
 import com.jb.cloudstorage.cloud_storage.exception.FileAlreadyExistsException;
+import com.jb.cloudstorage.cloud_storage.exception.InvalidCredentialsException;
 import com.jb.cloudstorage.cloud_storage.exception.ResourceNotFoundException;
 import com.jb.cloudstorage.cloud_storage.model.ResourceType;
 import com.jb.cloudstorage.cloud_storage.model.UserEntity;
@@ -26,9 +27,7 @@ public class ResourceService {
     }
 
     public ResourceResponse get(String fullPath) throws Exception {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        UserEntity user = userRepository.findByUsername(username);
-        Long userId = user.getId();
+        Long userId = getCurrentUserId();
 
         FileUtils.PathParts pathParts = FileUtils.splitPath(fullPath);
 
@@ -43,9 +42,7 @@ public class ResourceService {
     }
 
     public List<ResourceResponse> getDirectory(String fullPath) throws Exception {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        UserEntity user = userRepository.findByUsername(username);
-        Long userId = user.getId();
+        Long userId = getCurrentUserId();
 
         String normalizedPath = FileUtils.normalizeParentPath(fullPath);
 
@@ -58,9 +55,7 @@ public class ResourceService {
     }
 
     public List<ResourceResponse> upload(String folderPath, MultipartFile file) throws Exception { //Todo remove throwing Exception later
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        UserEntity user = userRepository.findByUsername(username);
-        Long userId = user.getId();
+        Long userId = getCurrentUserId();
 
         String objectPath = FileUtils.joinPath(folderPath, file.getOriginalFilename());
         if (fileStorageService.objectExists(userId, objectPath)) {
@@ -72,9 +67,7 @@ public class ResourceService {
     }
 
     public ResourceResponse createDirectory(String directoryPath) throws Exception {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        UserEntity user = userRepository.findByUsername(username);
-        Long userId = user.getId();
+        Long userId = getCurrentUserId();
         String normalizedPath = FileUtils.normalizeParentPath(directoryPath);
 
         FileUtils.PathParts parts = FileUtils.splitPath(normalizedPath);
@@ -98,15 +91,22 @@ public class ResourceService {
     }
 
     public void delete(String resourcePath) throws Exception {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        UserEntity user = userRepository.findByUsername(username);
-        Long userId = user.getId();
+        Long userId = getCurrentUserId();
 
         if (!fileStorageService.objectExists(userId, resourcePath)) {
             throw new ResourceNotFoundException(String.format("Resource is not found, path=%s", resourcePath));
         }
 
         fileStorageService.delete(userId, resourcePath);
+    }
+
+    private Long getCurrentUserId() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity user = userRepository.findByUsername(username);
+        if (user == null) {
+            throw new InvalidCredentialsException(String.format("User with username=%s is not found", username));
+        }
+        return user.getId();
     }
 
     private boolean parentExists(Long userId, String parentPath) throws Exception {
