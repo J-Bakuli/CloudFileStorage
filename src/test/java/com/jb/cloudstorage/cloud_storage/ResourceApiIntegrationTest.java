@@ -1,6 +1,5 @@
 package com.jb.cloudstorage.cloud_storage;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -109,7 +108,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testDeleteFile_notFound() throws Exception {
         basicSignUp(session);
         mockMvc.perform(
@@ -120,7 +118,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testDeleteFile_Success() throws Exception {
         basicSignUp(session);
         byte[] content = "hello".getBytes();
@@ -140,7 +137,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isCreated());
 
         mockMvc.perform(
-                       delete("/api/resource")
+                        delete("/api/resource")
                                 .param("path", "exam/test.txt")
                                 .session(session))
                 .andExpect(status().isNoContent());
@@ -153,7 +150,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testDeleteDirectory_Success() throws Exception {
         basicSignUp(session);
         mockMvc.perform(
