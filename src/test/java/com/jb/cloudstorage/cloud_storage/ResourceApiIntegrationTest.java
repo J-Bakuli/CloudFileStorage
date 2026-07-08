@@ -6,8 +6,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -99,5 +98,83 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                                 .session(session))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("already exists")));
+    }
+
+    @Test
+    void testDeleteFile_unauthorized() throws Exception {
+        mockMvc.perform(
+                        delete("/api/resource")
+                                .param("path", "test.txt"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @Disabled
+    void testDeleteFile_notFound() throws Exception {
+        basicSignUp(session);
+        mockMvc.perform(
+                        delete("/api/resource")
+                                .param("path", "noFile.txt")
+                                .session(session))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @Disabled
+    void testDeleteFile_Success() throws Exception {
+        basicSignUp(session);
+        byte[] content = "hello".getBytes();
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "test.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                content
+        );
+
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "exam")
+                                .session(session))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(
+                       delete("/api/resource")
+                                .param("path", "exam/test.txt")
+                                .session(session))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", "exam/test.txt")
+                                .session(session))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @Disabled
+    void testDeleteDirectory_Success() throws Exception {
+        basicSignUp(session);
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "newdir/")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("newdir"))
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+
+        mockMvc.perform(
+                        delete("/api/resource")
+                                .param("path", "newdir/")
+                                .session(session))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "newdir/")
+                                .session(session))
+                .andExpect(status().isNotFound());
     }
 }
