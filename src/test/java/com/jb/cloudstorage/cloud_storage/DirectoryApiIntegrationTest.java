@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -47,6 +48,14 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest{
     }
 
     @Test
+    void testGetDirectory_unauthenticated() throws Exception {
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "exam/"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void testCreateDirectory_unauthenticated() throws Exception {
         mockMvc.perform(
                         post("/api/directory")
@@ -74,5 +83,36 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest{
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].name").value("newdir"))
                 .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
+    }
+
+    @Test
+    void testCreateDirectory_parentNotFound() throws Exception {
+        basicSignUp(session);
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "missing/new-dir")
+                                .session(session))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", containsString("is not found")));
+    }
+
+    @Test
+    void testCreateDirectory_conflict() throws Exception {
+        basicSignUp(session);
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "newdir")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("newdir"))
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "newdir")
+                                .session(session))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message", containsString("already exists")));
     }
 }

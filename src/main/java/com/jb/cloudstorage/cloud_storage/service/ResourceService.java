@@ -78,7 +78,7 @@ public class ResourceService {
         }
 
         if (!parentExists(userId, parentPath)) {
-            throw new ResourceNotFoundException(String.format("Parent directory with path=%s not found", parentPath));
+            throw new ResourceNotFoundException(String.format("Parent directory is not found, path=%s", parentPath));
         }
 
         fileStorageService.createDirectory(userId, normalizedPath);
