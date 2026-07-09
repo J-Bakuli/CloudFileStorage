@@ -1,13 +1,17 @@
 package com.jb.cloudstorage.cloud_storage;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.web.servlet.MvcResult;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -126,5 +130,56 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                                 .session(session))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("already exists")));
+    }
+
+    @Test
+    void testDownloadDirectory_notFound() throws Exception {
+        basicSignUp(session);
+        mockMvc.perform(
+                        get("/api/resource/download")
+                                .param("path", "missing/")
+                                .session(session))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", containsString("is not found")));
+    }
+
+    @Disabled
+    @Test
+    void testDownloadDirectory_success() throws Exception {
+        basicSignUp(session);
+        byte[] content = "hello".getBytes();
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "test.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                content
+        );
+
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "newdir")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("newdir"))
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "newdir/")
+                                .session(session))
+                .andExpect(status().isCreated());
+
+        MvcResult result = mockMvc.perform(
+                        get("/api/resource/download")
+                                .param("path", "newdir/")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", containsString("application/zip")))
+                .andReturn();
+
+        Assertions.assertTrue(result.getResponse().getContentAsByteArray().length > 0);
     }
 }
