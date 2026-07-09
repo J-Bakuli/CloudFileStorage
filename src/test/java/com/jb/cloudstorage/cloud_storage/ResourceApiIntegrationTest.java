@@ -198,7 +198,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
-    @Disabled
     @Test
     void testDownloadFile_success() throws Exception {
         basicSignUp(session);
