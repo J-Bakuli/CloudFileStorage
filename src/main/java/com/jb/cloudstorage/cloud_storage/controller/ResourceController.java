@@ -5,8 +5,10 @@ import com.jb.cloudstorage.cloud_storage.service.ResourceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -65,5 +67,17 @@ public class ResourceController {
             @RequestParam("path") String path
     ) throws Exception {
         resourceService.delete(path);
+    }
+
+    @Operation(summary = "Download resource")
+    @ApiResponse(responseCode = "200", description = "Success, binary file content (application/octet-stream)")
+    @ApiResponse(responseCode = "400", description = "Invalid or missing path")
+    @ApiResponse(responseCode = "401", description = "Unauthorized access")
+    @ApiResponse(responseCode = "404", description = "Resource is not found")
+    @GetMapping(value = "/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<InputStreamResource> download(
+            @RequestParam("path") String path
+    ) throws Exception {
+        return resourceService.download(path);
     }
 }

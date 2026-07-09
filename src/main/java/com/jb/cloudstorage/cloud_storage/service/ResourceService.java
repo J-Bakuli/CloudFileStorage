@@ -10,6 +10,10 @@ import com.jb.cloudstorage.cloud_storage.model.UserEntity;
 import com.jb.cloudstorage.cloud_storage.repository.UserRepository;
 import com.jb.cloudstorage.cloud_storage.util.FileUtils;
 import io.minio.messages.Item;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -98,6 +102,26 @@ public class ResourceService {
         }
 
         fileStorageService.delete(userId, resourcePath);
+    }
+
+    public ResponseEntity<InputStreamResource> download(String resourcePath) throws Exception {
+        Long userId = getCurrentUserId();
+
+        ResourceType type = FileUtils.getResourceType(resourcePath);
+
+        if (!fileStorageService.objectExists(userId, resourcePath)) {
+            throw new ResourceNotFoundException(String.format("Resource is not found, path=%s", resourcePath));
+        }
+
+        if (type == ResourceType.DIRECTORY) {
+            throw new IllegalArgumentException("Another method will be invoked"); //TODO to write method for directory download
+        } else {
+            String name = FileUtils.splitPath(resourcePath).name();
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType("application/octet-stream"))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + name + "\"")
+                    .body(fileStorageService.download(userId, resourcePath));
+        }
     }
 
     private Long getCurrentUserId() {

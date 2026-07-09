@@ -4,6 +4,7 @@ import com.jb.cloudstorage.cloud_storage.config.MinioProperties;
 import com.jb.cloudstorage.cloud_storage.model.ResourceType;
 import com.jb.cloudstorage.cloud_storage.util.FileUtils;
 import io.minio.BucketExistsArgs;
+import io.minio.GetObjectArgs;
 import io.minio.ListObjectsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
@@ -15,6 +16,7 @@ import io.minio.errors.ErrorResponseException;
 import io.minio.errors.MinioException;
 import io.minio.messages.Item;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -133,6 +135,17 @@ public class FileStorageService {
         } else {
             deleteRecursively(userId, resourcePath);
         }
+    }
+
+    public InputStreamResource download(Long userId, String resourcePath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+        ensureBucketExists();
+        String objectName = fullObjectName(userId, resourcePath);
+
+        log.debug("Downloading file for userId={}, objectName={}", userId, objectName);
+        return new InputStreamResource(minioClient.getObject(GetObjectArgs.builder()
+                .bucket(minioProperties.bucket())
+                .object(objectName)
+                .build()));
     }
 
     private void deleteRecursively(Long userId, String resourcePath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
