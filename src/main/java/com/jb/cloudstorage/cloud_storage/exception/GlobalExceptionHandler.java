@@ -21,7 +21,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidCredentialsException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiErrorResponse handleInvalidCredentialsException(InvalidCredentialsException ex, HttpServletRequest request) {
-        log.warn("Unauthorized request: uri={}, message={}", request.getRequestURI(), ex.getMessage());
+        log.debug("Unauthorized request: uri={}, message={}", request.getRequestURI(), ex.getMessage());
         return buildError(
                 HttpStatus.UNAUTHORIZED,
                 ex.getMessage(),

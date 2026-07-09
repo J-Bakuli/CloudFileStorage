@@ -10,6 +10,7 @@ import com.jb.cloudstorage.cloud_storage.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -19,6 +20,7 @@ import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 public class AuthService {
     private final UserRepository userRepository;
@@ -59,6 +61,7 @@ public class AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         securityContextRepository.saveContext(SecurityContextHolder.getContext(), request, response);
 
+        log.info("Successful sign-up with username={}", username);
         return new UserResponse(username);
     }
 
@@ -67,6 +70,7 @@ public class AuthService {
         UserEntity userEntity = userRepository.findByUsername(username);
 
         if (userEntity == null || !passwordEncoder.matches(signInRequest.password(), userEntity.getPassword())) {
+            log.warn("Sign-in failed for username={}", username);
             throw new InvalidCredentialsException("Invalid username or password");
         }
 
@@ -79,6 +83,7 @@ public class AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         securityContextRepository.saveContext(SecurityContextHolder.getContext(), request, response);
 
+        log.info("Successful sign-in with username={}", username);
         return new UserResponse(username);
     }
 
@@ -88,5 +93,6 @@ public class AuthService {
         if (session != null) {
             session.invalidate();
         }
+        log.debug("Session invalidated on sign-out");
     }
 }
