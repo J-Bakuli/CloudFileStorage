@@ -1,11 +1,17 @@
 package com.jb.cloudstorage.cloud_storage;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -172,5 +178,52 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                                 .param("path", "newdir/")
                                 .session(session))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testDownloadFile_unauthorized() throws Exception {
+        mockMvc.perform(
+                        get("/api/resource/download")
+                                .param("path", "test.txt"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void testDownloadFile_notFound() throws Exception {
+        basicSignUp(session);
+        mockMvc.perform(
+                        get("/api/resource/download")
+                                .param("path", "noFile.txt")
+                                .session(session))
+                .andExpect(status().isNotFound());
+    }
+
+    @Disabled
+    @Test
+    void testDownloadFile_success() throws Exception {
+        basicSignUp(session);
+        byte[] content = "hello".getBytes();
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "test.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                content
+        );
+
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "exam")
+                                .session(session))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(
+                        get("/api/resource/download")
+                                .param("path", "exam/test.txt")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", containsString("octet-stream")))
+                .andExpect(content().bytes(content));
     }
 }
