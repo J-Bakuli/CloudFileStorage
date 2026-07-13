@@ -90,6 +90,7 @@ public class FileStorageService {
 
     public boolean objectExists(Long userId, String directoryPath) throws Exception {
         log.debug("Checking object existence for userId={}, path={}", userId, directoryPath);
+        ensureBucketExists();
         try {
             minioClient.statObject(
                     StatObjectArgs.builder()
@@ -100,7 +101,7 @@ public class FileStorageService {
             log.debug("Object exists for userId={}, path={}", userId, directoryPath);
             return true;
         } catch (ErrorResponseException e) {
-            if ("NoSuchKey".equals(e.errorResponse().code())) {
+            if ("NoSuchKey".equals(e.errorResponse().code()) || "NoSuchBucket".equals(e.errorResponse().code())) {
                 log.debug("Object not found for userId={}, path={}", userId, directoryPath);
                 return false;
             }

@@ -6,10 +6,10 @@ import io.minio.errors.ErrorResponseException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.Instant;
@@ -19,10 +19,9 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidCredentialsException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ApiErrorResponse handleInvalidCredentialsException(InvalidCredentialsException ex, HttpServletRequest request) {
+    public ResponseEntity<ApiErrorResponse> handleInvalidCredentialsException(InvalidCredentialsException ex, HttpServletRequest request) {
         log.debug("Unauthorized request: uri={}, message={}", request.getRequestURI(), ex.getMessage());
-        return buildError(
+        return jsonError(
                 HttpStatus.UNAUTHORIZED,
                 ex.getMessage(),
                 request.getRequestURI(),
@@ -30,10 +29,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(UsernameAlreadyExistsException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiErrorResponse handleUsernameAlreadyExistsException(UsernameAlreadyExistsException ex, HttpServletRequest request) {
+    public ResponseEntity<ApiErrorResponse> handleUsernameAlreadyExistsException(UsernameAlreadyExistsException ex, HttpServletRequest request) {
         log.debug("Username conflict: uri={}, message={}", request.getRequestURI(), ex.getMessage());
-        return buildError(
+        return jsonError(
                 HttpStatus.CONFLICT,
                 ex.getMessage(),
                 request.getRequestURI(),
@@ -41,10 +39,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DirectoryAlreadyExistsException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiErrorResponse handleDirectoryAlreadyExistsException(DirectoryAlreadyExistsException ex, HttpServletRequest request) {
+    public ResponseEntity<ApiErrorResponse> handleDirectoryAlreadyExistsException(DirectoryAlreadyExistsException ex, HttpServletRequest request) {
         log.debug("Directory conflict: uri={}, message={}", request.getRequestURI(), ex.getMessage());
-        return buildError(
+        return jsonError(
                 HttpStatus.CONFLICT,
                 ex.getMessage(),
                 request.getRequestURI(),
@@ -52,10 +49,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(FileAlreadyExistsException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiErrorResponse handleFileAlreadyExistsException(FileAlreadyExistsException ex, HttpServletRequest request) {
+    public ResponseEntity<ApiErrorResponse> handleFileAlreadyExistsException(FileAlreadyExistsException ex, HttpServletRequest request) {
         log.debug("File conflict: uri={}, message={}", request.getRequestURI(), ex.getMessage());
-        return buildError(
+        return jsonError(
                 HttpStatus.CONFLICT,
                 ex.getMessage(),
                 request.getRequestURI(),
@@ -63,10 +59,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiErrorResponse handleResourceNotFoundException(ResourceNotFoundException ex, HttpServletRequest request) {
+    public ResponseEntity<ApiErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex, HttpServletRequest request) {
         log.debug("Resource not found: uri={}, message={}", request.getRequestURI(), ex.getMessage());
-        return buildError(
+        return jsonError(
                 HttpStatus.NOT_FOUND,
                 ex.getMessage(),
                 request.getRequestURI(),
@@ -74,8 +69,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
+    public ResponseEntity<ApiErrorResponse> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
         List<ApiFieldError> errors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
@@ -89,7 +83,7 @@ public class GlobalExceptionHandler {
         } else {
             log.debug("Validation failed: uri={}", request.getRequestURI());
         }
-        return buildError(
+        return jsonError(
                 HttpStatus.BAD_REQUEST,
                 "Validation failed",
                 request.getRequestURI(),
@@ -101,28 +95,39 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleErrorResponseException(ErrorResponseException ex, HttpServletRequest request) {
         if ("NoSuchKey".equals(ex.errorResponse().code())) {
             log.debug("MinIO object not found: uri={}", request.getRequestURI());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(buildError(
+            return jsonError(
                     HttpStatus.NOT_FOUND,
                     "Resource not found",
                     request.getRequestURI(),
-                    List.of()));
+                    List.of());
         }
         log.error("MinIO error: uri={}, code={}", request.getRequestURI(), ex.errorResponse().code(), ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(buildError(
+        return jsonError(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Storage error",
                 request.getRequestURI(),
-                List.of()));
+                List.of());
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnexpectedException(Exception ex, HttpServletRequest request) {
         log.error("Unexpected error: uri={}", request.getRequestURI(), ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(buildError(
+        return jsonError(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Internal server error",
                 request.getRequestURI(),
-                List.of()));
+                List.of());
+    }
+
+    private ResponseEntity<ApiErrorResponse> jsonError(
+            HttpStatus status,
+            String message,
+            String path,
+            List<ApiFieldError> errors
+    ) {
+        return ResponseEntity.status(status)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(buildError(status, message, path, errors));
     }
 
     private ApiErrorResponse buildError(

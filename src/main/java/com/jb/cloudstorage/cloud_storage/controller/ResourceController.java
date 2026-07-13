@@ -70,11 +70,11 @@ public class ResourceController {
     }
 
     @Operation(summary = "Download resource")
-    @ApiResponse(responseCode = "200", description = "Success, binary file content (application/octet-stream)")
+    @ApiResponse(responseCode = "200", description = "Binary content: application/octet-stream for file, application/zip for directory")
     @ApiResponse(responseCode = "400", description = "Invalid or missing path")
     @ApiResponse(responseCode = "401", description = "Unauthorized access")
     @ApiResponse(responseCode = "404", description = "Resource is not found")
-    @GetMapping(value = "/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping("/download")
     public ResponseEntity<InputStreamResource> download(
             @RequestParam("path") String path
     ) throws Exception {
