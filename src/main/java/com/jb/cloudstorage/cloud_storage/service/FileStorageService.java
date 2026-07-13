@@ -20,12 +20,16 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Slf4j
 @Service
@@ -148,6 +152,43 @@ public class FileStorageService {
                 .build()));
     }
 
+    public InputStreamResource downloadDirectoryAsZip(Long userId, String resourcePath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+        ensureBucketExists();
+        log.debug("Downloading directory as zip for userId={}, path={}", userId, resourcePath);
+
+        List<Item> results = listObjects(userId, resourcePath, true);
+        String normalizedPath = FileUtils.normalizeParentPath(resourcePath);
+        String prefix = buildUserObjectPrefix(userId, normalizedPath);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+            for (Item item : results) {
+                if (item.isDir()) {
+                    continue;
+                }
+
+                String objectName = item.objectName();
+                String archiveEntryName = objectName.substring(prefix.length());
+                if (archiveEntryName.isEmpty()) {
+                    continue;
+                }
+
+                log.debug("Adding to zip: {} -> {}", objectName, archiveEntryName);
+                try (InputStream inputStream = minioClient.getObject(GetObjectArgs.builder()
+                        .bucket(minioProperties.bucket())
+                        .object(objectName)
+                        .build())) {
+                    zipOutputStream.putNextEntry(new ZipEntry(archiveEntryName));
+                    inputStream.transferTo(zipOutputStream);
+                    zipOutputStream.closeEntry();
+                }
+            }
+        }
+
+        log.info("Built zip for userId={}, path={}, size={}", userId, resourcePath, outputStream.size());
+        return new InputStreamResource(new ByteArrayInputStream(outputStream.toByteArray()));
+    }
+
     private void deleteRecursively(Long userId, String resourcePath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
         String normalizedPath = FileUtils.normalizeParentPath(resourcePath);
         String prefix = buildUserObjectPrefix(userId, normalizedPath);
@@ -189,7 +230,7 @@ public class FileStorageService {
         return fullObjectName(userId, normalizedPath);
     }
 
-    public List<Item> listObjects(Long userId, String directoryPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    public List<Item> listObjects(Long userId, String directoryPath, boolean isRecursive) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
         log.debug("Listing objects for userId={}, directoryPath={}", userId, directoryPath);
         ensureBucketExists();
 
@@ -199,7 +240,7 @@ public class FileStorageService {
                 ListObjectsArgs.builder()
                         .bucket(minioProperties.bucket())
                         .prefix(prefix)
-                        .recursive(false)
+                        .recursive(isRecursive)
                         .build()
         );
 

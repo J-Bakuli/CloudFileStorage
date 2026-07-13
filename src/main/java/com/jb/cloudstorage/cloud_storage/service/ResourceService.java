@@ -54,7 +54,7 @@ public class ResourceService {
             throw new ResourceNotFoundException(String.format("Directory is not found, path=%s", normalizedPath));
         }
 
-        List<Item> objects = fileStorageService.listObjects(userId, normalizedPath);
+        List<Item> objects = fileStorageService.listObjects(userId, normalizedPath, false);
         return buildResponse(userId, objects);
     }
 
@@ -113,15 +113,18 @@ public class ResourceService {
             throw new ResourceNotFoundException(String.format("Resource is not found, path=%s", resourcePath));
         }
 
+        String name = FileUtils.splitPath(resourcePath).name();
         if (type == ResourceType.DIRECTORY) {
-            throw new IllegalArgumentException("Another method will be invoked"); //TODO to write method for directory download
-        } else {
-            String name = FileUtils.splitPath(resourcePath).name();
             return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType("application/octet-stream"))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + name + "\"")
-                    .body(fileStorageService.download(userId, resourcePath));
+                    .contentType(MediaType.parseMediaType("application/zip"))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + name + ".zip\"")
+                    .body(fileStorageService.downloadDirectoryAsZip(userId, resourcePath));
         }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("application/octet-stream"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + name + "\"")
+                .body(fileStorageService.download(userId, resourcePath));
     }
 
     private Long getCurrentUserId() {
@@ -142,7 +145,7 @@ public class ResourceService {
             return true;
         }
 
-        return !fileStorageService.listObjects(userId, parentPath).isEmpty();
+        return !fileStorageService.listObjects(userId, parentPath, false).isEmpty();
     }
 
     private ResourceResponse buildResponse(String folderPath, MultipartFile file) {
