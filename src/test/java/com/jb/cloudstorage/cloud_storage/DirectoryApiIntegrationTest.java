@@ -143,6 +143,18 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
+    void testDownloadDirectory_notFound_acceptOctetStream() throws Exception {
+        basicSignUp(session);
+        mockMvc.perform(
+                        get("/api/resource/download")
+                                .param("path", "missing/")
+                                .accept(MediaType.APPLICATION_OCTET_STREAM)
+                                .session(session))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", containsString("is not found")));
+    }
+
+    @Test
     void testDownloadDirectory_success() throws Exception {
         basicSignUp(session);
         byte[] content = "hello".getBytes();
