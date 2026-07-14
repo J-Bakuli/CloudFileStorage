@@ -1,7 +1,6 @@
 package com.jb.cloudstorage.cloud_storage;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -247,7 +246,6 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testMoveDirectory_move_success() throws Exception {
         basicSignUp(session);
 
@@ -305,7 +303,6 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testMoveDirectory_rename_success() throws Exception {
         basicSignUp(session);
 
@@ -363,7 +360,6 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testMoveDirectory_intoParent_success() throws Exception {
         basicSignUp(session);
 
