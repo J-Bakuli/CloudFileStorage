@@ -4,6 +4,8 @@ import com.jb.cloudstorage.cloud_storage.config.MinioProperties;
 import com.jb.cloudstorage.cloud_storage.model.ResourceType;
 import com.jb.cloudstorage.cloud_storage.util.FileUtils;
 import io.minio.BucketExistsArgs;
+import io.minio.CopyObjectArgs;
+import io.minio.CopySource;
 import io.minio.GetObjectArgs;
 import io.minio.ListObjectsArgs;
 import io.minio.MakeBucketArgs;
@@ -188,6 +190,28 @@ public class FileStorageService {
 
         log.info("Built zip for userId={}, path={}, size={}", userId, resourcePath, outputStream.size());
         return new InputStreamResource(new ByteArrayInputStream(outputStream.toByteArray()));
+    }
+
+    public void moveFile(Long userId, String fromPath, String toPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+        log.debug("Move file for userId={}, fromPath={}, toPath={}",
+                userId, fromPath, toPath);
+        ensureBucketExists();
+        copyObject(userId, fromPath, toPath);
+        delete(userId, fromPath);
+    }
+
+    private void copyObject(Long userId, String fromPath, String toPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+        String fromObjectName = fullObjectName(userId, fromPath);
+        String toObjectName = fullObjectName(userId, toPath);
+
+        minioClient.copyObject(CopyObjectArgs.builder()
+                .bucket(minioProperties.bucket())
+                .object(toObjectName)
+                .source(CopySource.builder()
+                        .bucket(minioProperties.bucket())
+                        .object(fromObjectName)
+                        .build())
+                .build());
     }
 
     private void deleteRecursively(Long userId, String resourcePath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {

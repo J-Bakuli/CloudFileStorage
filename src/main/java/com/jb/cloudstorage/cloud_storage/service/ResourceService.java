@@ -127,6 +127,33 @@ public class ResourceService {
                 .body(fileStorageService.download(userId, resourcePath));
     }
 
+    public ResourceResponse move(String fromPath, String toPath) throws Exception {
+        Long userId = getCurrentUserId();
+
+        if (!fileStorageService.objectExists(userId, fromPath)) {
+            throw new ResourceNotFoundException(String.format("Resource is not found, path=%s", fromPath));
+        }
+
+        if (fileStorageService.objectExists(userId, toPath)) {
+            throw new FileAlreadyExistsException(String.format("File already exists, path=%s", toPath));
+        }
+
+        ResourceType type = FileUtils.getResourceType(fromPath);
+        if (type == ResourceType.FILE) {
+            fileStorageService.moveFile(userId, fromPath, toPath);
+        } /*else {
+            fileStorageService.moveDirectory(userId, fromPath, toPath);
+        }*/
+
+        FileUtils.PathParts pathParts = FileUtils.splitPath(toPath);
+        return new ResourceResponse(
+                pathParts.parentPath(),
+                pathParts.name(),
+                fileStorageService.getObjectSize(userId, toPath),
+                pathParts.type()
+        );
+    }
+
     private Long getCurrentUserId() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         UserEntity user = userRepository.findByUsername(username);

@@ -80,4 +80,17 @@ public class ResourceController {
     ) throws Exception {
         return resourceService.download(path);
     }
+
+    @Operation(summary = "Move resource: rename or move")
+    @ApiResponse(responseCode = "200", description = "Success")
+    @ApiResponse(responseCode = "400", description = "Invalid or missing path")
+    @ApiResponse(responseCode = "401", description = "Unauthorized access")
+    @ApiResponse(responseCode = "404", description = "Resource is not found")
+    @ApiResponse(responseCode = "409", description = "Resource from path to already exists")
+    @PostMapping("/move")
+    public ResourceResponse move(
+            @RequestParam("from") String fromPath, @RequestParam("to") String toPath
+    ) throws Exception {
+        return resourceService.move(fromPath, toPath);
+    }
 }
