@@ -193,11 +193,19 @@ public class FileStorageService {
     }
 
     public void moveFile(Long userId, String fromPath, String toPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
-        log.debug("Move file for userId={}, fromPath={}, toPath={}",
-                userId, fromPath, toPath);
+        log.debug("Move file for userId={}, fromPath={}, toPath={}", userId, fromPath, toPath);
         ensureBucketExists();
         copyObject(userId, fromPath, toPath);
         delete(userId, fromPath);
+        log.info("Moved file for userId={}, fromPath={}, toPath={}", userId, fromPath, toPath);
+    }
+
+    public void moveDirectory(Long userId, String fromPath, String toPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+        log.debug("Move directory for userId={}, fromPath={}, toPath={}", userId, fromPath, toPath);
+        ensureBucketExists();
+        copyObjectRecursively(userId, fromPath, toPath);
+        deleteRecursively(userId, fromPath);
+        log.info("Moved directory for userId={}, fromPath={}, toPath={}", userId, fromPath, toPath);
     }
 
     private void copyObject(Long userId, String fromPath, String toPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
@@ -212,6 +220,37 @@ public class FileStorageService {
                         .object(fromObjectName)
                         .build())
                 .build());
+    }
+
+    private void copyObjectRecursively(Long userId, String fromPath, String toPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+        String fromPrefix = buildUserObjectPrefix(userId, fromPath);
+        String toPrefix = buildUserObjectPrefix(userId, toPath);
+
+        log.debug("Copying objects recursively for userId={}, path={}, fromPrefix={}, toPrefix={}", userId, fromPath, fromPrefix, toPrefix);
+        Iterable<Result<Item>> results = minioClient.listObjects(
+                ListObjectsArgs.builder()
+                        .bucket(minioProperties.bucket())
+                        .prefix(fromPrefix)
+                        .recursive(true)
+                        .build()
+        );
+
+        int copiedCount = 0;
+        for (Result<Item> result : results) {
+            String fromObjectName = result.get().objectName();
+            String toObjectName = toPrefix + fromObjectName.substring(fromPrefix.length());
+            minioClient.copyObject(CopyObjectArgs.builder()
+                    .bucket(minioProperties.bucket())
+                    .object(toObjectName)
+                    .source(CopySource.builder()
+                            .bucket(minioProperties.bucket())
+                            .object(fromObjectName)
+                            .build())
+                    .build());
+            copiedCount++;
+            log.debug("Copied object: {}", toObjectName);
+        }
+        log.info("Copied files in directory for userId={}, fromPath={}, toPath={},objectsCopied={}", userId, fromPath, toPath, copiedCount);
     }
 
     private void deleteRecursively(Long userId, String resourcePath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {

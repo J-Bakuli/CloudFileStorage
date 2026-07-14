@@ -141,15 +141,16 @@ public class ResourceService {
         ResourceType type = FileUtils.getResourceType(fromPath);
         if (type == ResourceType.FILE) {
             fileStorageService.moveFile(userId, fromPath, toPath);
-        } /*else {
+        } else {
             fileStorageService.moveDirectory(userId, fromPath, toPath);
-        }*/
+        }
 
         FileUtils.PathParts pathParts = FileUtils.splitPath(toPath);
+        Long size = pathParts.type() == ResourceType.FILE ? fileStorageService.getObjectSize(userId, toPath) : null;
         return new ResourceResponse(
                 pathParts.parentPath(),
                 pathParts.name(),
-                fileStorageService.getObjectSize(userId, toPath),
+                size,
                 pathParts.type()
         );
     }
