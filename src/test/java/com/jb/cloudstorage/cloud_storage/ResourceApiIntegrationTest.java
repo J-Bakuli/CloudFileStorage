@@ -239,7 +239,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testMoveFile_notFound() throws Exception {
         basicSignUp(session);
         mockMvc.perform(
@@ -252,7 +251,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testMoveFile_conflict() throws Exception {
         basicSignUp(session);
 
