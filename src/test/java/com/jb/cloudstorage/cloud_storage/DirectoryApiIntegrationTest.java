@@ -1,6 +1,7 @@
 package com.jb.cloudstorage.cloud_storage;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -191,5 +192,240 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andReturn();
 
         Assertions.assertTrue(result.getResponse().getContentAsByteArray().length > 0);
+    }
+
+    @Test
+    void testMoveDirectory_unauthorized() throws Exception {
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "exam/")
+                                .param("to", "test/"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void testMoveDirectory_notFound() throws Exception {
+        basicSignUp(session);
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "exam/")
+                                .param("to", "test/")
+                                .session(session))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", containsString("is not found")));
+    }
+
+    @Test
+    void testMoveDirectory_conflict() throws Exception {
+        basicSignUp(session);
+
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "dir")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("dir"))
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "newdir")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("newdir"))
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "dir/")
+                                .param("to", "newdir/")
+                                .session(session))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message", containsString("already exists")));
+    }
+
+    @Test
+    @Disabled
+    void testMoveDirectory_move_success() throws Exception {
+        basicSignUp(session);
+
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "dir")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("dir"))
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "test.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                "hello".getBytes());
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "dir")
+                                .session(session))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "dir/")
+                                .param("to", "exam/")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("exam"))
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", "dir/test.txt")
+                                .session(session))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "dir/")
+                                .session(session))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", "exam/test.txt")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.path").value("exam/"))
+                .andExpect(jsonPath("$.name").value("test.txt"))
+                .andExpect(jsonPath("$.type").value("FILE"));
+    }
+
+    @Test
+    @Disabled
+    void testMoveDirectory_rename_success() throws Exception {
+        basicSignUp(session);
+
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "dir")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("dir"))
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "test.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                "hello".getBytes());
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "dir")
+                                .session(session))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "dir/")
+                                .param("to", "exam/")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("exam"))
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", "dir/test.txt")
+                                .session(session))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "dir/")
+                                .session(session))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", "exam/test.txt")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.path").value("exam/"))
+                .andExpect(jsonPath("$.name").value("test.txt"))
+                .andExpect(jsonPath("$.type").value("FILE"));
+    }
+
+    @Test
+    @Disabled
+    void testMoveDirectory_intoParent_success() throws Exception {
+        basicSignUp(session);
+
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "other")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("other"))
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "dir")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("dir"))
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "test.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                "hello".getBytes());
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "dir")
+                                .session(session))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "dir/")
+                                .param("to", "other/dir/")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.path").value("other/"))
+                .andExpect(jsonPath("$.name").value("dir"))
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", "dir/test.txt")
+                                .session(session))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "dir/")
+                                .session(session))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", "other/dir/test.txt")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.path").value("other/dir/"))
+                .andExpect(jsonPath("$.name").value("test.txt"))
+                .andExpect(jsonPath("$.type").value("FILE"));
     }
 }
