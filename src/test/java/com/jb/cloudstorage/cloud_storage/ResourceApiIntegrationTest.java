@@ -6,6 +6,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -372,5 +373,151 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                                 .session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("new_test.txt"));
+    }
+
+
+    @Test
+    void testSearch_unauthenticated() throws Exception {
+        mockMvc.perform(
+                        get("/api/resource/search")
+                                .param("query", "timelines"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void testSearch_notFound() throws Exception {
+        basicSignUp(session);
+        mockMvc.perform(
+                        get("/api/resource/search")
+                                .param("query", "timelines")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").value(hasSize(0)))
+                .andExpect(jsonPath("$.errors").doesNotExist());
+    }
+
+    @Test
+    @Disabled
+    void testSearch_blankQuery() throws Exception {
+        basicSignUp(session);
+        byte[] content = "hello".getBytes();
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "test.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                content
+        );
+
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "exam")
+                                .session(session))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(
+                        get("/api/resource/search")
+                                .param("query", "")
+                                .session(session))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Query is empty")));
+    }
+
+    @Test
+    @Disabled
+    void testSearch_success() throws Exception {
+        basicSignUp(session);
+        byte[] content = "hello".getBytes();
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "test.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                content
+        );
+
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "exam")
+                                .session(session))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(
+                        get("/api/resource/search")
+                                .param("query", "test.txt")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].path").value("exam/"))
+                .andExpect(jsonPath("$[0].name").value("test.txt"))
+                .andExpect(jsonPath("$[0].size").value(content.length))
+                .andExpect(jsonPath("$[0].type").value("FILE"));
+
+        mockMvc.perform(
+                        get("/api/resource/search")
+                                .param("query", "tes")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].path").value("exam/"))
+                .andExpect(jsonPath("$[0].name").value("test.txt"))
+                .andExpect(jsonPath("$[0].size").value(content.length))
+                .andExpect(jsonPath("$[0].type").value("FILE"));
+
+        mockMvc.perform(
+                        get("/api/resource/search")
+                                .param("query", "EXam")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].path").value("exam/"))
+                .andExpect(jsonPath("$[0].name").value("test.txt"))
+                .andExpect(jsonPath("$[0].size").value(content.length))
+                .andExpect(jsonPath("$[0].type").value("FILE"));
+    }
+
+    @Test
+    @Disabled
+    void testSearch_success_same_fileName_in_several_folders() throws Exception {
+        basicSignUp(session);
+        byte[] content = "hello".getBytes();
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "test.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                content
+        );
+
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "exam")
+                                .session(session))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "daily")
+                                .session(session))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(
+                        get("/api/resource/search")
+                                .param("query", "test.txt")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].path").value("daily/"))
+                .andExpect(jsonPath("$[0].name").value("test.txt"))
+                .andExpect(jsonPath("$[0].size").value(content.length))
+                .andExpect(jsonPath("$[0].type").value("FILE"))
+                .andExpect(jsonPath("$[1].path").value("exam/"))
+                .andExpect(jsonPath("$[1].name").value("test.txt"))
+                .andExpect(jsonPath("$[1].size").value(content.length))
+                .andExpect(jsonPath("$[1].type").value("FILE"));
     }
 }
