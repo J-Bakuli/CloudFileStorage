@@ -398,7 +398,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testSearch_blankQuery() throws Exception {
         basicSignUp(session);
         byte[] content = "hello".getBytes();
@@ -425,7 +424,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testSearch_success() throws Exception {
         basicSignUp(session);
         byte[] content = "hello".getBytes();
@@ -479,7 +477,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testSearch_success_same_fileName_in_several_folders() throws Exception {
         basicSignUp(session);
         byte[] content = "hello".getBytes();
