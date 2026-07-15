@@ -9,7 +9,9 @@ import com.jb.cloudstorage.cloud_storage.model.ResourceType;
 import com.jb.cloudstorage.cloud_storage.model.UserEntity;
 import com.jb.cloudstorage.cloud_storage.repository.UserRepository;
 import com.jb.cloudstorage.cloud_storage.util.FileUtils;
+import io.minio.errors.MinioException;
 import io.minio.messages.Item;
+import org.apache.coyote.BadRequestException;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -18,6 +20,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 @Service
@@ -153,6 +158,15 @@ public class ResourceService {
                 size,
                 pathParts.type()
         );
+    }
+
+    public List<ResourceResponse> search(String query) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+        if (query.trim().isBlank()) {
+            throw new BadRequestException("Query is empty");
+        }
+        Long userId = getCurrentUserId();
+        List<Item> items = fileStorageService.search(userId, query);
+        return buildResponse(userId, items);
     }
 
     private Long getCurrentUserId() {

@@ -30,6 +30,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -206,6 +207,23 @@ public class FileStorageService {
         copyObjectRecursively(userId, fromPath, toPath);
         deleteRecursively(userId, fromPath);
         log.info("Moved directory for userId={}, fromPath={}, toPath={}", userId, fromPath, toPath);
+    }
+
+    public List<Item> search(Long userId, String query) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+        log.debug("Search files for userId={}, query={}", userId, query);
+        List<Item> items = listObjects(userId, "", true);
+        log.info("Search is completed for userId={}, query={}", userId, query);
+        return filter(query, items);
+    }
+
+    private List<Item> filter(String query, List<Item> items) {
+        if (query == null || query.isBlank()) {
+            return new ArrayList<>(items);
+        }
+        String lowerQuery = query.trim().toLowerCase();
+        return items.stream()
+                .filter(item -> item.objectName().trim().toLowerCase().contains(lowerQuery))
+                .collect(Collectors.toList());
     }
 
     private void copyObject(Long userId, String fromPath, String toPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {

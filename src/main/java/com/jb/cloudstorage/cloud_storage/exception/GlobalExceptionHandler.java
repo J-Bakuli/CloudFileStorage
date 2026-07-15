@@ -5,6 +5,7 @@ import com.jb.cloudstorage.cloud_storage.dto.ApiFieldError;
 import io.minio.errors.ErrorResponseException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -63,6 +64,16 @@ public class GlobalExceptionHandler {
         log.debug("Resource not found: uri={}, message={}", request.getRequestURI(), ex.getMessage());
         return jsonError(
                 HttpStatus.NOT_FOUND,
+                ex.getMessage(),
+                request.getRequestURI(),
+                List.of());
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ApiErrorResponse> handleBadRequestException(BadRequestException ex, HttpServletRequest request) {
+        log.debug("Bad request: uri={}, message={}", request.getRequestURI(), ex.getMessage());
+        return jsonError(
+                HttpStatus.BAD_REQUEST,
                 ex.getMessage(),
                 request.getRequestURI(),
                 List.of());

@@ -93,4 +93,15 @@ public class ResourceController {
     ) throws Exception {
         return resourceService.move(fromPath, toPath);
     }
+
+    @Operation(summary = "Search resource")
+    @ApiResponse(responseCode = "200", description = "Success")
+    @ApiResponse(responseCode = "400", description = "Invalid or missing query")
+    @ApiResponse(responseCode = "401", description = "Unauthorized access")
+    @GetMapping("/search")
+    public List<ResourceResponse> search(
+            @RequestParam("query") String query
+    ) throws Exception {
+        return resourceService.search(query);
+    }
 }
