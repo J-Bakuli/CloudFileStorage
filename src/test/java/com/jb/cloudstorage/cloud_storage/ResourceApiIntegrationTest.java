@@ -517,4 +517,74 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(jsonPath("$[1].size").value(content.length))
                 .andExpect(jsonPath("$[1].type").value("FILE"));
     }
+
+    @Test
+    void testSearch_success_nested_folders() throws Exception {
+        basicSignUp(session);
+        byte[] content = "hello".getBytes();
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "test.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                content
+        );
+
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "level1/level2/level3")
+                                .session(session))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(
+                        get("/api/resource/search")
+                                .param("query", "test.txt")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].path").value("level1/level2/level3/"))
+                .andExpect(jsonPath("$[0].name").value("test.txt"))
+                .andExpect(jsonPath("$[0].size").value(content.length))
+                .andExpect(jsonPath("$[0].type").value("FILE"));
+    }
+
+    @Test
+    @Disabled
+    void testSearch_success_directory() throws Exception {
+        basicSignUp(session);
+        byte[] content = "hello".getBytes();
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "test.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                content
+        );
+
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "level1/")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("level1"))
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "level1/level2/level3")
+                                .session(session))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(
+                        get("/api/resource/search")
+                                .param("query", "level2")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].path").value("level1/"))
+                .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
+    }
 }
