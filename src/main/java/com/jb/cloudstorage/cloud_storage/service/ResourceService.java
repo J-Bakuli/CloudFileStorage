@@ -205,8 +205,8 @@ public class ResourceService {
                     String objectName = item.objectName();
                     String relativePath = objectName.substring(("user-" + userId + "-files/").length());
                     FileUtils.PathParts parts = FileUtils.splitPath(relativePath);
-                    Long size = item.isDir() ? null : item.size();
-                    ResourceType type = item.isDir() ? ResourceType.DIRECTORY : ResourceType.FILE;
+                    ResourceType type = FileUtils.getResourceType(relativePath);
+                    Long size = type == ResourceType.DIRECTORY ? null : item.size();
                     return new ResourceResponse(parts.parentPath(), parts.name(), size, type);
                 }
         ).toList();

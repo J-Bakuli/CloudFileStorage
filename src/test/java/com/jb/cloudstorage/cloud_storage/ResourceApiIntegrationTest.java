@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -425,7 +426,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    void testSearch_success() throws Exception {
+    void testSearch_success_searchFile_trimAndPartialName() throws Exception {
         basicSignUp(session);
         byte[] content = "hello".getBytes();
 
@@ -478,7 +479,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    void testSearch_success_same_fileName_in_several_folders() throws Exception {
+    void testSearch_success_searchFile_with_same_fileName_in_several_folders() throws Exception {
         basicSignUp(session);
         byte[] content = "hello".getBytes();
 
@@ -520,7 +521,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    void testSearch_success_nested_folders() throws Exception {
+    void testSearch_success_searchFile_in_nested_directories() throws Exception {
         basicSignUp(session);
         byte[] content = "hello".getBytes();
 
@@ -551,17 +552,8 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
-    void testSearch_success_directory() throws Exception {
+    void testSearch_success_searchDirectory_without_file() throws Exception {
         basicSignUp(session);
-        byte[] content = "hello".getBytes();
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.txt",
-                MediaType.TEXT_PLAIN_VALUE,
-                content
-        );
 
         mockMvc.perform(
                         post("/api/directory")
@@ -574,19 +566,78 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
 
         mockMvc.perform(
+                        get("/api/resource/search")
+                                .param("query", "level1")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$.size").doesNotExist())
+                .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
+    }
+
+    @Test
+    void testSearch_success_searchDirectory_with_nestedDirectories_without_file() throws Exception {
+        basicSignUp(session);
+
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "level1/level2/")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("level1/level2"))
+                .andExpect(jsonPath("$.size").doesNotExist())
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+
+        mockMvc.perform(
+                        get("/api/resource/search")
+                                .param("query", "level1/level2")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$.size").doesNotExist())
+                .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
+    }
+
+    @Test
+    @Disabled
+    void testSearch_success_searchDirectory_with_file() throws Exception {
+        basicSignUp(session);
+        byte[] content = "hello".getBytes();
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "test.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                content
+        );
+
+/*        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "level1/")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("level1"))
+                .andExpect(jsonPath("$.size").doesNotExist())
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));*/
+
+        mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
-                                .param("path", "level1/level2/level3")
+                                .param("path", "level1/")
                                 .session(session))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(
                         get("/api/resource/search")
-                                .param("query", "level2")
+                                .param("query", "level1")
                                 .session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].path").value("level1/"))
+                //.andExpect(jsonPath("$[0].path").value("level1/"))
                 .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
     }
