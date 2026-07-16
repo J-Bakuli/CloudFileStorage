@@ -168,6 +168,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("newdir"))
+                .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
 
         mockMvc.perform(
@@ -569,6 +570,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("level1"))
+                .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
 
         mockMvc.perform(
@@ -585,6 +587,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].path").value("level1/"))
+                .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
     }
 }

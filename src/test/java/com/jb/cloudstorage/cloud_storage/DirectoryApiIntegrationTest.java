@@ -7,6 +7,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.empty;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -88,6 +89,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("newdir"))
+                .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
 
         mockMvc.perform(
@@ -97,6 +99,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].name").value("newdir"))
+                .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
     }
 
@@ -121,6 +124,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("newdir"))
+                .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
 
         mockMvc.perform(
@@ -173,6 +177,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("newdir"))
+                .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
 
         mockMvc.perform(
@@ -188,6 +193,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                                 .session(session))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", containsString("application/zip")))
+                .andExpect(jsonPath("$.size").doesNotExist())
                 .andReturn();
 
         Assertions.assertTrue(result.getResponse().getContentAsByteArray().length > 0);
@@ -225,6 +231,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("dir"))
+                .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
 
         mockMvc.perform(
@@ -234,6 +241,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("newdir"))
+                .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
 
         mockMvc.perform(
@@ -256,6 +264,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("dir"))
+                .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
 
         MockMultipartFile file = new MockMultipartFile(
@@ -278,6 +287,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("exam"))
+                .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
 
         mockMvc.perform(
@@ -313,6 +323,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("dir"))
+                .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
 
         MockMultipartFile file = new MockMultipartFile(
@@ -335,6 +346,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("exam"))
+                .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
 
         mockMvc.perform(
@@ -370,6 +382,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("other"))
+                .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
 
         mockMvc.perform(
@@ -379,6 +392,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("dir"))
+                .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
 
         MockMultipartFile file = new MockMultipartFile(
@@ -401,6 +415,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.path").value("other/"))
                 .andExpect(jsonPath("$.name").value("dir"))
+                .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
 
         mockMvc.perform(
