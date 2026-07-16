@@ -1,6 +1,7 @@
 package com.jb.cloudstorage.cloud_storage;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -101,6 +102,51 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(jsonPath("$[0].name").value("newdir"))
                 .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
+    }
+
+    @Test
+    @Disabled
+    void testCreateDirectory_nestedDirectories_success() throws Exception {
+        basicSignUp(session);
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "level1/")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("level1"))
+                .andExpect(jsonPath("$.size").doesNotExist())
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "level1/level2/")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.path").value("level1/"))
+                .andExpect(jsonPath("$.name").value("level2"))
+                .andExpect(jsonPath("$.size").doesNotExist())
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+               // .andExpect(jsonPath("$[0].name").value("level1/level2")) //Todo to fix
+                .andExpect(jsonPath("$.size").doesNotExist())
+                .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
+
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "round1/round2/")
+                                .session(session))
+                .andExpect(status().isCreated()) //Todo to fix
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("round1/round2"))
+                .andExpect(jsonPath("$.size").doesNotExist())
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
     }
 
     @Test
