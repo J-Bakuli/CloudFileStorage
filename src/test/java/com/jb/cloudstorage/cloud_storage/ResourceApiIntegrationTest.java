@@ -1,6 +1,5 @@
 package com.jb.cloudstorage.cloud_storage;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -577,16 +576,36 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    void testSearch_success_searchDirectory_with_nestedDirectories_without_file() throws Exception {
+    void testSearch_success_searchDirectory_with_one_directory_per_time_creation_without_file() throws Exception {
         basicSignUp(session);
+
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "level1/")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("level1"))
+                .andExpect(jsonPath("$.size").doesNotExist())
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
 
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "level1/level2/")
                                 .session(session))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.path").value(""))
-                .andExpect(jsonPath("$.name").value("level1/level2"))
+                .andExpect(jsonPath("$.path").value("level1/"))
+                .andExpect(jsonPath("$.name").value("level2"))
+                .andExpect(jsonPath("$.size").doesNotExist())
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "level1/level2/level3/")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.path").value("level1/level2/"))
+                .andExpect(jsonPath("$.name").value("level3"))
                 .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
 
@@ -595,10 +614,16 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                                 .param("query", "level1/level2")
                                 .session(session))
                 .andExpect(status().isOk())
-                .andDo(print())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$.size").doesNotExist())
-                .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].path").value("level1/"))
+                .andExpect(jsonPath("$[0].name").value("level2"))
+                .andExpect(jsonPath("$[0].size").doesNotExist())
+                .andExpect(jsonPath("$[0].type").value("DIRECTORY"))
+                .andExpect(jsonPath("$[1].path").value("level1/level2/"))
+                .andExpect(jsonPath("$[1].name").value("level3"))
+                .andExpect(jsonPath("$[1].size").doesNotExist())
+                .andExpect(jsonPath("$[1].type").value("DIRECTORY"));
     }
 
     @Test
@@ -635,6 +660,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                                 .param("query", "level1")
                                 .session(session))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].path").value("level1/"))
                 .andExpect(jsonPath("$[0].name").value("test.txt"))

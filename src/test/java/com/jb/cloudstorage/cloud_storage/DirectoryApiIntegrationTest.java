@@ -1,7 +1,6 @@
 package com.jb.cloudstorage.cloud_storage;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -123,6 +122,16 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value("level1/"))
                 .andExpect(jsonPath("$.name").value("level2"))
+                .andExpect(jsonPath("$.size").doesNotExist())
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "level1/level2/level3/")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.path").value("level1/level2/"))
+                .andExpect(jsonPath("$.name").value("level3"))
                 .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
 
