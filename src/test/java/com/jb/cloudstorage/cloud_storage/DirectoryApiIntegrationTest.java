@@ -8,7 +8,6 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.empty;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -105,8 +104,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
-    void testCreateDirectory_nestedDirectories_success() throws Exception {
+    void testCreateDirectory_one_directory_per_time_success() throws Exception {
         basicSignUp(session);
         mockMvc.perform(
                         post("/api/directory")
@@ -133,28 +131,20 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                                 .param("path", "")
                                 .session(session))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(1))
-               // .andExpect(jsonPath("$[0].name").value("level1/level2")) //Todo to fix
-                .andExpect(jsonPath("$.size").doesNotExist())
+                .andExpect(jsonPath("$[0].path").isEmpty())
+                .andExpect(jsonPath("$[0].name").value("level1"))
+                .andExpect(jsonPath("$[0].size").doesNotExist())
                 .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
-
-        mockMvc.perform(
-                        post("/api/directory")
-                                .param("path", "round1/round2/")
-                                .session(session))
-                .andExpect(status().isCreated()) //Todo to fix
-                .andExpect(jsonPath("$.path").value(""))
-                .andExpect(jsonPath("$.name").value("round1/round2"))
-                .andExpect(jsonPath("$.size").doesNotExist())
-                .andExpect(jsonPath("$.type").value("DIRECTORY"));
     }
 
     @Test
-    void testCreateDirectory_parentNotFound() throws Exception {
+    void testCreateDirectory_several_directories_per_time_parentNotFound() throws Exception {
         basicSignUp(session);
         mockMvc.perform(
                         post("/api/directory")
-                                .param("path", "missing/new-dir")
+                                .param("path", "level1/level2/")
                                 .session(session))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message", containsString("is not found")));
