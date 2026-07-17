@@ -602,8 +602,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
-    void testSearch_success_searchDirectory_with_file() throws Exception {
+    void testSearch_success_explicit_dir_creation_with_file() throws Exception {
         basicSignUp(session);
         byte[] content = "hello".getBytes();
 
@@ -614,7 +613,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                 content
         );
 
-/*        mockMvc.perform(
+        mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "level1/")
                                 .session(session))
@@ -622,7 +621,42 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("level1"))
                 .andExpect(jsonPath("$.size").doesNotExist())
-                .andExpect(jsonPath("$.type").value("DIRECTORY"));*/
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "level1/")
+                                .session(session))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(
+                        get("/api/resource/search")
+                                .param("query", "level1")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].path").value("level1/"))
+                .andExpect(jsonPath("$[0].name").value("test.txt"))
+                .andExpect(jsonPath("$[0].size").value(content.length))
+                .andExpect(jsonPath("$[0].type").value("FILE"))
+                .andExpect(jsonPath("$[1].path").value(""))
+                .andExpect(jsonPath("$[1].name").value("level1"))
+                .andExpect(jsonPath("$[1].size").doesNotExist())
+                .andExpect(jsonPath("$[1].type").value("DIRECTORY"));
+    }
+
+    @Test
+    void testSearch_success_without_explicit_dir_creation_with_file() throws Exception {
+        basicSignUp(session);
+        byte[] content = "hello".getBytes();
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "test.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                content
+        );
 
         mockMvc.perform(
                         multipart("/api/resource")
@@ -637,8 +671,9 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                                 .session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                //.andExpect(jsonPath("$[0].path").value("level1/"))
-                .andExpect(jsonPath("$.size").doesNotExist())
-                .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
+                .andExpect(jsonPath("$[0].path").value("level1/"))
+                .andExpect(jsonPath("$[0].name").value("test.txt"))
+                .andExpect(jsonPath("$[0].size").value(content.length))
+                .andExpect(jsonPath("$[0].type").value("FILE"));
     }
 }

@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -209,6 +210,8 @@ public class ResourceService {
                     Long size = type == ResourceType.DIRECTORY ? null : item.size();
                     return new ResourceResponse(parts.parentPath(), parts.name(), size, type);
                 }
-        ).toList();
+        )
+                .sorted(Comparator.comparing(ResourceResponse::type))
+                .toList();
     }
 }
