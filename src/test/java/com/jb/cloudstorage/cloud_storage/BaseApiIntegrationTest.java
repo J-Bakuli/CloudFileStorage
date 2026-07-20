@@ -14,7 +14,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ActiveProfiles("test")
@@ -51,5 +54,26 @@ public abstract class BaseApiIntegrationTest {
                                 .content(objectMapper.writeValueAsString(signUp))
                                 .session(session))
                 .andExpect(status().isCreated());
+    }
+
+    void uploadBasicFile() throws Exception {
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "exam")
+                                .session(session))
+                .andExpect(status().isCreated());
+    }
+
+    void getBasicFile() throws Exception {
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", "exam/test.txt")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.path").value("exam/"))
+                .andExpect(jsonPath("$.name").value("test.txt"))
+                .andExpect(jsonPath("$.size").value(content.length))
+                .andExpect(jsonPath("$.type").value("FILE"));
     }
 }
