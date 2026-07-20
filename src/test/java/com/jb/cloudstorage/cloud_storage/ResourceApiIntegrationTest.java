@@ -19,11 +19,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     @Test
     void testUpload_unauthenticated() throws Exception {
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.txt",
-                MediaType.TEXT_PLAIN_VALUE,
-                "hello".getBytes());
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
@@ -53,14 +48,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     @Test
     void testGet_success() throws Exception {
         basicSignUp(session);
-        byte[] content = "hello".getBytes();
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.txt",
-                MediaType.TEXT_PLAIN_VALUE,
-                content
-        );
 
         mockMvc.perform(
                         multipart("/api/resource")
@@ -83,13 +70,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     @Test
     void testUploadFile_conflict() throws Exception {
         basicSignUp(session);
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.txt",
-                MediaType.TEXT_PLAIN_VALUE,
-                "hello".getBytes()
-        );
 
         mockMvc.perform(
                         multipart("/api/resource")
@@ -129,14 +109,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     @Test
     void testDeleteFile_Success() throws Exception {
         basicSignUp(session);
-        byte[] content = "hello".getBytes();
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.txt",
-                MediaType.TEXT_PLAIN_VALUE,
-                content
-        );
 
         mockMvc.perform(
                         multipart("/api/resource")
@@ -206,14 +178,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     @Test
     void testDownloadFile_success() throws Exception {
         basicSignUp(session);
-        byte[] content = "hello".getBytes();
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.txt",
-                MediaType.TEXT_PLAIN_VALUE,
-                content
-        );
 
         mockMvc.perform(
                         multipart("/api/resource")
@@ -256,13 +220,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     void testMoveFile_conflict() throws Exception {
         basicSignUp(session);
 
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.txt",
-                MediaType.TEXT_PLAIN_VALUE,
-                "hello".getBytes()
-        );
-
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
@@ -289,15 +246,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     @Test
     void testMoveFile_move_success() throws Exception {
         basicSignUp(session);
-
-        byte[] content = "hello".getBytes();
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.txt",
-                MediaType.TEXT_PLAIN_VALUE,
-                content
-        );
 
         mockMvc.perform(
                         multipart("/api/resource")
@@ -334,15 +282,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     @Test
     void testMoveFile_rename_success() throws Exception {
         basicSignUp(session);
-
-        byte[] content = "hello".getBytes();
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.txt",
-                MediaType.TEXT_PLAIN_VALUE,
-                content
-        );
 
         mockMvc.perform(
                         multipart("/api/resource")
@@ -401,13 +340,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     @Test
     void testSearch_blankQuery() throws Exception {
         basicSignUp(session);
-        byte[] content = "hello".getBytes();
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.txt",
-                MediaType.TEXT_PLAIN_VALUE,
-                content
-        );
 
         mockMvc.perform(
                         multipart("/api/resource")
@@ -427,14 +359,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     @Test
     void testSearch_success_searchFile_trimAndPartialName() throws Exception {
         basicSignUp(session);
-        byte[] content = "hello".getBytes();
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.txt",
-                MediaType.TEXT_PLAIN_VALUE,
-                content
-        );
 
         mockMvc.perform(
                         multipart("/api/resource")
@@ -480,14 +404,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     @Test
     void testSearch_success_searchFile_with_same_fileName_in_several_folders() throws Exception {
         basicSignUp(session);
-        byte[] content = "hello".getBytes();
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.txt",
-                MediaType.TEXT_PLAIN_VALUE,
-                content
-        );
 
         mockMvc.perform(
                         multipart("/api/resource")
@@ -522,14 +438,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     @Test
     void testSearch_success_searchFile_in_nested_directories() throws Exception {
         basicSignUp(session);
-        byte[] content = "hello".getBytes();
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.txt",
-                MediaType.TEXT_PLAIN_VALUE,
-                content
-        );
 
         mockMvc.perform(
                         multipart("/api/resource")
@@ -629,14 +537,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     @Test
     void testSearch_success_explicit_dir_creation_with_file() throws Exception {
         basicSignUp(session);
-        byte[] content = "hello".getBytes();
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.txt",
-                MediaType.TEXT_PLAIN_VALUE,
-                content
-        );
 
         mockMvc.perform(
                         post("/api/directory")
@@ -675,14 +575,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     @Test
     void testSearch_success_without_explicit_dir_creation_with_file() throws Exception {
         basicSignUp(session);
-        byte[] content = "hello".getBytes();
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.txt",
-                MediaType.TEXT_PLAIN_VALUE,
-                content
-        );
 
         mockMvc.perform(
                         multipart("/api/resource")

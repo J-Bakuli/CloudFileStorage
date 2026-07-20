@@ -18,14 +18,6 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
     @Test
     void testGetDirectory_success() throws Exception {
         basicSignUp(session);
-        byte[] content = "hello".getBytes();
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.txt",
-                MediaType.TEXT_PLAIN_VALUE,
-                content
-        );
 
         mockMvc.perform(
                         multipart("/api/resource")
@@ -206,14 +198,6 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
     @Test
     void testDownloadDirectory_success() throws Exception {
         basicSignUp(session);
-        byte[] content = "hello".getBytes();
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.txt",
-                MediaType.TEXT_PLAIN_VALUE,
-                content
-        );
 
         mockMvc.perform(
                         post("/api/directory")
@@ -312,11 +296,6 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
 
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.txt",
-                MediaType.TEXT_PLAIN_VALUE,
-                "hello".getBytes());
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
@@ -371,11 +350,6 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
 
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.txt",
-                MediaType.TEXT_PLAIN_VALUE,
-                "hello".getBytes());
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
@@ -440,11 +414,6 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
 
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.txt",
-                MediaType.TEXT_PLAIN_VALUE,
-                "hello".getBytes());
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)

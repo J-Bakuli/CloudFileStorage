@@ -8,6 +8,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,13 @@ public abstract class BaseApiIntegrationTest {
     private static final String BASIC_USERNAME = "CloudFileStorage";
     private static final String BASIC_PASSWORD = "password123";
     protected MockHttpSession session;
+    protected final byte[] content = "hello".getBytes();
+    protected final MockMultipartFile file = new MockMultipartFile(
+            "file",
+            "test.txt",
+            MediaType.TEXT_PLAIN_VALUE,
+            content
+    );
 
     @BeforeEach
     void setUp() {
