@@ -34,7 +34,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testGet_notFound() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         get("/api/resource")
                                 .param("path", "noFile.txt")
@@ -45,14 +45,14 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testGet_success() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         uploadBasicFile();
         getBasicFile();
     }
 
     @Test
     void testUploadFile_conflict() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
@@ -78,7 +78,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testDeleteFile_notFound() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         delete("/api/resource")
                                 .param("path", "noFile.txt")
@@ -89,7 +89,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testDeleteFile_Success() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         uploadBasicFile();
         mockMvc.perform(
                         delete("/api/resource")
@@ -105,7 +105,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testDeleteDirectory_Success() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "newdir/")
@@ -137,7 +137,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testDownloadFile_notFound() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         get("/api/resource/download")
                                 .param("path", "noFile.txt")
@@ -148,7 +148,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testDownloadFile_success() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         uploadBasicFile();
         mockMvc.perform(
                         get("/api/resource/download")
@@ -170,7 +170,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testMoveFile_notFound() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         post("/api/resource/move")
                                 .param("from", "exam/test.txt")
@@ -182,7 +182,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testMoveFile_conflict() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         uploadBasicFile();
         mockMvc.perform(
                         multipart("/api/resource")
@@ -201,7 +201,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testMoveFile_move_success() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         uploadBasicFile();
         mockMvc.perform(
                         post("/api/resource/move")
@@ -228,7 +228,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testMoveFile_rename_success() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         uploadBasicFile();
         mockMvc.perform(
                         post("/api/resource/move")
@@ -264,7 +264,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testSearch_notFound() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         get("/api/resource/search")
                                 .param("query", "timelines")
@@ -277,7 +277,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testSearch_blankQuery() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         uploadBasicFile();
         mockMvc.perform(
                         get("/api/resource/search")
@@ -289,7 +289,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testSearch_success_searchFile_trimAndPartialName() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         uploadBasicFile();
         mockMvc.perform(
                         get("/api/resource/search")
@@ -325,7 +325,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testSearch_success_searchFile_with_same_fileName_in_several_folders() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         uploadBasicFile();
         mockMvc.perform(
                         multipart("/api/resource")
@@ -351,7 +351,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testSearch_success_searchFile_in_nested_directories() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
@@ -372,7 +372,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testSearch_success_searchDirectory_without_file() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "level1/")
@@ -395,7 +395,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testSearch_success_searchDirectory_with_one_directory_per_time_creation_without_file() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "level1/")
@@ -442,7 +442,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testSearch_success_explicit_dir_creation_with_file() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "exam/")
@@ -472,7 +472,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testSearch_success_without_explicit_dir_creation_with_file() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         uploadBasicFile();
         mockMvc.perform(
                         get("/api/resource/search")

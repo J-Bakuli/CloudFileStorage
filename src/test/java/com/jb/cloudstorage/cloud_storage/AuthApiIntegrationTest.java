@@ -1,22 +1,13 @@
 package com.jb.cloudstorage.cloud_storage;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jb.cloudstorage.cloud_storage.dto.SignInRequest;
 import com.jb.cloudstorage.cloud_storage.dto.SignUpRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpSession;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import static org.hamcrest.Matchers.containsString;
@@ -26,21 +17,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ActiveProfiles("test")
-@AutoConfigureMockMvc
-@Testcontainers
-@SpringBootTest
-@Transactional
-public class AuthApiIntegrationTest {
-    @Autowired
-    private MockMvc mockMvc;
-    @Autowired
-    private ObjectMapper objectMapper;
+public class AuthApiIntegrationTest extends BaseApiIntegrationTest {
     @ServiceConnection
     @Container
     static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:16");
-    private static final String BASIC_USERNAME = "CloudFileStorage";
-    private static final String BASIC_PASSWORD = "password123";
 
     @ParameterizedTest
     @CsvSource({
@@ -101,8 +81,7 @@ public class AuthApiIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message", containsString("already exists")))
-        ;
+                .andExpect(jsonPath("$.message", containsString("already exists")));
     }
 
     @ParameterizedTest
@@ -141,9 +120,8 @@ public class AuthApiIntegrationTest {
 
     @Test
     void testSignIn_success() throws Exception {
-        MockHttpSession session = new MockHttpSession();
-        basicSignUp(session);
-        basicSignIn(session);
+        basicSignUp();
+        basicSignIn();
     }
 
     @Test
@@ -160,9 +138,7 @@ public class AuthApiIntegrationTest {
 
     @Test
     void testSignIn_wrongPassword() throws Exception {
-        MockHttpSession session = new MockHttpSession();
-        basicSignUp(session);
-
+        basicSignUp();
         String password = "AAAAAAAAAAAA";
         SignInRequest signInRequest = new SignInRequest(BASIC_USERNAME, password);
         mockMvc.perform(
@@ -175,22 +151,18 @@ public class AuthApiIntegrationTest {
 
     @Test
     void testSignOut_UserMe_success() throws Exception {
-        MockHttpSession session = new MockHttpSession();
-        basicSignUp(session);
-        basicSignIn(session);
-
+        basicSignUp();
+        basicSignIn();
         mockMvc.perform(
                         get("/api/user/me")
                                 .session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username", is(BASIC_USERNAME)));
-
         mockMvc.perform(
                         post("/api/auth/sign-out")
                                 .session(session)
                                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
-
         mockMvc.perform(
                         get("/api/user/me")
                                 .session(session))
@@ -202,29 +174,5 @@ public class AuthApiIntegrationTest {
         mockMvc.perform(
                         get("/api/user/me"))
                 .andExpect(status().isUnauthorized());
-    }
-
-    private void basicSignUp(MockHttpSession session) throws Exception {
-        SignUpRequest signUpRequest = new SignUpRequest(BASIC_USERNAME, BASIC_PASSWORD);
-        mockMvc.perform(
-                        post("/api/auth/sign-up")
-                                .session(session)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(signUpRequest)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.username", is(BASIC_USERNAME)));
-        ;
-    }
-
-    private void basicSignIn(MockHttpSession session) throws Exception {
-        SignInRequest signInRequest = new SignInRequest(BASIC_USERNAME, BASIC_PASSWORD);
-        mockMvc.perform(
-                        post("/api/auth/sign-in")
-                                .session(session)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(signInRequest)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username", is(BASIC_USERNAME)));
-        ;
     }
 }

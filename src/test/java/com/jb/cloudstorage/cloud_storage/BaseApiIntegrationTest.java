@@ -1,6 +1,7 @@
 package com.jb.cloudstorage.cloud_storage;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jb.cloudstorage.cloud_storage.dto.SignInRequest;
 import com.jb.cloudstorage.cloud_storage.dto.SignUpRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -29,9 +31,9 @@ public abstract class BaseApiIntegrationTest {
     @Autowired
     protected MockMvc mockMvc;
     @Autowired
-    private ObjectMapper objectMapper;
-    private static final String BASIC_USERNAME = "CloudFileStorage";
-    private static final String BASIC_PASSWORD = "password123";
+    protected ObjectMapper objectMapper;
+    protected static final String BASIC_USERNAME = "CloudFileStorage";
+    protected static final String BASIC_PASSWORD = "password123";
     protected MockHttpSession session;
     protected final byte[] content = "hello".getBytes();
     protected final MockMultipartFile file = new MockMultipartFile(
@@ -46,14 +48,26 @@ public abstract class BaseApiIntegrationTest {
         session = new MockHttpSession();
     }
 
-    void basicSignUp(MockHttpSession session) throws Exception {
+    void basicSignUp() throws Exception {
         SignUpRequest signUp = new SignUpRequest(BASIC_USERNAME, BASIC_PASSWORD);
         mockMvc.perform(
                         post("/api/auth/sign-up")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(signUp))
                                 .session(session))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.username", is(BASIC_USERNAME)));
+    }
+
+    void basicSignIn() throws Exception {
+        SignInRequest signInRequest = new SignInRequest(BASIC_USERNAME, BASIC_PASSWORD);
+        mockMvc.perform(
+                        post("/api/auth/sign-in")
+                                .session(session)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(signInRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username", is(BASIC_USERNAME)));
     }
 
     void uploadBasicFile() throws Exception {
