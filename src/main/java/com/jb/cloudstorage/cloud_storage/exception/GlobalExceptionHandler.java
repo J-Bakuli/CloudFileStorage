@@ -3,7 +3,6 @@ package com.jb.cloudstorage.cloud_storage.exception;
 import com.jb.cloudstorage.cloud_storage.dto.ApiErrorResponse;
 import com.jb.cloudstorage.cloud_storage.dto.ApiFieldError;
 import io.minio.errors.ErrorResponseException;
-import io.minio.errors.MinioException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
@@ -14,9 +13,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.List;
 
@@ -83,43 +79,12 @@ public class GlobalExceptionHandler {
                 List.of());
     }
 
-    @ExceptionHandler(MinioException.class)
-    //ToDo how to avoid throwing exceptions in service layer
-    public ResponseEntity<ApiErrorResponse> handleMinioException(MinioException ex, HttpServletRequest request) {
-        log.debug("Minio exception: uri={}, message={}", request.getRequestURI(), ex.getMessage());
+    @ExceptionHandler(StorageException.class)
+    public ResponseEntity<ApiErrorResponse> handleStorageException(StorageException ex, HttpServletRequest request) {
+        log.error("Storage exception: uri={}, message={}", request.getRequestURI(), ex.getMessage());
         return jsonError(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                "Storage error",
-                request.getRequestURI(),
-                List.of());
-    }
-
-    @ExceptionHandler(NoSuchAlgorithmException.class)
-    public ResponseEntity<ApiErrorResponse> handleNoSuchAlgorithmException(NoSuchAlgorithmException ex, HttpServletRequest request) {
-        log.debug("NoSuchAlgorithm exception: uri={}, message={}", request.getRequestURI(), ex.getMessage());
-        return jsonError(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "Storage error",
-                request.getRequestURI(),
-                List.of());
-    }
-
-    @ExceptionHandler(InvalidKeyException.class)
-    public ResponseEntity<ApiErrorResponse> handleInvalidKeyException(InvalidKeyException ex, HttpServletRequest request) {
-        log.debug("Invalid key exception: uri={}, message={}", request.getRequestURI(), ex.getMessage());
-        return jsonError(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "Storage error",
-                request.getRequestURI(),
-                List.of());
-    }
-
-    @ExceptionHandler(IOException.class)
-    public ResponseEntity<ApiErrorResponse> handleIOException(IOException ex, HttpServletRequest request) {
-        log.debug("IO exception: uri={}, message={}", request.getRequestURI(), ex.getMessage());
-        return jsonError(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "Storage error",
+                String.format("Storage error + %s", ex),
                 request.getRequestURI(),
                 List.of());
     }

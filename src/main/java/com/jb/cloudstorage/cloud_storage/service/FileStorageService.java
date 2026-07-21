@@ -1,6 +1,7 @@
 package com.jb.cloudstorage.cloud_storage.service;
 
 import com.jb.cloudstorage.cloud_storage.config.MinioProperties;
+import com.jb.cloudstorage.cloud_storage.exception.StorageException;
 import com.jb.cloudstorage.cloud_storage.model.ResourceType;
 import com.jb.cloudstorage.cloud_storage.util.FileUtils;
 import io.minio.BucketExistsArgs;
@@ -44,50 +45,40 @@ public class FileStorageService {
         this.minioClient = minioClient;
     }
 
-    public void ensureBucketExists() throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
-        boolean exists = minioClient.bucketExists(
-                BucketExistsArgs.builder()
-                        .bucket(minioProperties.bucket())
-                        .build()
-        );
 
-        if (!exists) {
-            log.info("Creating MinIO bucket: {}", minioProperties.bucket());
-            minioClient.makeBucket(
-                    MakeBucketArgs.builder()
-                            .bucket(minioProperties.bucket())
-                            .build()
-            );
-        }
-    }
-
-    public void uploadFile(Long userId, String relativePath, MultipartFile file) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    public void uploadFile(Long userId, String relativePath, MultipartFile file) throws StorageException {
         log.debug("Uploading file for userId={}, relativePath={}, filename={}, size={}",
                 userId, relativePath, file.getOriginalFilename(), file.getSize());
         ensureBucketExists();
-
         String objectPath = FileUtils.joinPath(relativePath, file.getOriginalFilename());
         String objectName = fullObjectName(userId, objectPath);
-
-        minioClient.putObject(PutObjectArgs.builder()
-                .bucket(minioProperties.bucket())
-                .object(objectName)
-                .stream(file.getInputStream(), file.getSize(), -1)
-                .contentType(file.getContentType())
-                .build());
-        log.info("Uploaded file for userId={}, objectName={}", userId, objectName);
+        try {
+            minioClient.putObject(PutObjectArgs.builder()
+                    .bucket(minioProperties.bucket())
+                    .object(objectName)
+                    .stream(file.getInputStream(), file.getSize(), -1)
+                    .contentType(file.getContentType())
+                    .build());
+            log.info("Uploaded file for userId={}, objectName={}", userId, objectName);
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new StorageException("Storage error", e);
+        }
     }
 
-    public void createDirectory(Long userId, String folderPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    public void createDirectory(Long userId, String folderPath) throws StorageException {
         log.debug("Creating directory for userId={}, folderPath={}", userId, folderPath);
         ensureBucketExists();
-        minioClient.putObject(PutObjectArgs.builder()
-                .bucket(minioProperties.bucket())
-                .object(fullObjectName(userId, folderPath))
-                .stream(InputStream.nullInputStream(), 0, 0)
-                .contentType("application/octet-stream")
-                .build());
-        log.info("Created directory for userId={}, folderPath={}", userId, folderPath);
+        try {
+            minioClient.putObject(PutObjectArgs.builder()
+                    .bucket(minioProperties.bucket())
+                    .object(fullObjectName(userId, folderPath))
+                    .stream(InputStream.nullInputStream(), 0, 0)
+                    .contentType("application/octet-stream")
+                    .build());
+            log.info("Created directory for userId={}, folderPath={}", userId, folderPath);
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new StorageException("Storage error", e);
+        }
     }
 
     public boolean objectExists(Long userId, String directoryPath) throws Exception {
@@ -113,49 +104,56 @@ public class FileStorageService {
         }
     }
 
-    public Long getObjectSize(Long userId, String fullPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    public Long getObjectSize(Long userId, String fullPath) throws StorageException {
         log.debug("Getting object size for userId={}, path={}", userId, fullPath);
         ensureBucketExists();
-
         String objectName = fullObjectName(userId, fullPath);
-
-        return minioClient.statObject(
-                StatObjectArgs.builder()
-                        .bucket(minioProperties.bucket())
-                        .object(objectName)
-                        .build()
-        ).size();
-    }
-
-    public void delete(Long userId, String resourcePath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
-        ensureBucketExists();
-
-        ResourceType type = FileUtils.getResourceType(resourcePath);
-        log.debug("Deleting resource for userId={}, path={}, type={}", userId, resourcePath, type);
-
-        if (type == ResourceType.FILE) {
-            minioClient.removeObject(RemoveObjectArgs.builder()
-                    .bucket(minioProperties.bucket())
-                    .object(fullObjectName(userId, resourcePath))
-                    .build());
-            log.info("Deleted file for userId={}, path={}", userId, resourcePath);
-        } else {
-            deleteRecursively(userId, resourcePath);
+        try {
+            return minioClient.statObject(
+                    StatObjectArgs.builder()
+                            .bucket(minioProperties.bucket())
+                            .object(objectName)
+                            .build()
+            ).size();
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new StorageException("Storage error", e);
         }
     }
 
-    public InputStreamResource download(Long userId, String resourcePath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    public void delete(Long userId, String resourcePath) throws StorageException {
         ensureBucketExists();
-        String objectName = fullObjectName(userId, resourcePath);
-
-        log.debug("Downloading file for userId={}, objectName={}", userId, objectName);
-        return new InputStreamResource(minioClient.getObject(GetObjectArgs.builder()
-                .bucket(minioProperties.bucket())
-                .object(objectName)
-                .build()));
+        ResourceType type = FileUtils.getResourceType(resourcePath);
+        log.debug("Deleting resource for userId={}, path={}, type={}", userId, resourcePath, type);
+        try {
+            if (type == ResourceType.FILE) {
+                minioClient.removeObject(RemoveObjectArgs.builder()
+                        .bucket(minioProperties.bucket())
+                        .object(fullObjectName(userId, resourcePath))
+                        .build());
+                log.info("Deleted file for userId={}, path={}", userId, resourcePath);
+            } else {
+                deleteRecursively(userId, resourcePath);
+            }
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new StorageException("Storage error", e);
+        }
     }
 
-    public InputStreamResource downloadDirectoryAsZip(Long userId, String resourcePath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    public InputStreamResource download(Long userId, String resourcePath) throws StorageException {
+        ensureBucketExists();
+        String objectName = fullObjectName(userId, resourcePath);
+        log.debug("Downloading file for userId={}, objectName={}", userId, objectName);
+        try {
+            return new InputStreamResource(minioClient.getObject(GetObjectArgs.builder()
+                    .bucket(minioProperties.bucket())
+                    .object(objectName)
+                    .build()));
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new StorageException("Storage error", e);
+        }
+    }
+
+    public InputStreamResource downloadDirectoryAsZip(Long userId, String resourcePath) throws StorageException {
         ensureBucketExists();
         log.debug("Downloading directory as zip for userId={}, path={}", userId, resourcePath);
 
@@ -186,13 +184,15 @@ public class FileStorageService {
                     zipOutputStream.closeEntry();
                 }
             }
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new StorageException("Storage error", e);
         }
 
         log.info("Built zip for userId={}, path={}, size={}", userId, resourcePath, outputStream.size());
         return new InputStreamResource(new ByteArrayInputStream(outputStream.toByteArray()));
     }
 
-    public void moveFile(Long userId, String fromPath, String toPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    public void moveFile(Long userId, String fromPath, String toPath) throws StorageException {
         log.debug("Move file for userId={}, fromPath={}, toPath={}", userId, fromPath, toPath);
         ensureBucketExists();
         copyObject(userId, fromPath, toPath);
@@ -200,7 +200,7 @@ public class FileStorageService {
         log.info("Moved file for userId={}, fromPath={}, toPath={}", userId, fromPath, toPath);
     }
 
-    public void moveDirectory(Long userId, String fromPath, String toPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    public void moveDirectory(Long userId, String fromPath, String toPath) throws StorageException {
         log.debug("Move directory for userId={}, fromPath={}, toPath={}", userId, fromPath, toPath);
         ensureBucketExists();
         copyObjectRecursively(userId, fromPath, toPath);
@@ -208,11 +208,58 @@ public class FileStorageService {
         log.info("Moved directory for userId={}, fromPath={}, toPath={}", userId, fromPath, toPath);
     }
 
-    public List<Item> search(Long userId, String query) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    public List<Item> search(Long userId, String query) throws StorageException {
         log.debug("Search files for userId={}, query={}", userId, query);
         List<Item> items = listObjects(userId, "", true);
         log.info("Search is completed for userId={}, query={}", userId, query);
         return filter(userId, query, items);
+    }
+
+    public List<Item> listObjects(Long userId, String directoryPath, boolean isRecursive) throws StorageException {
+        log.debug("Listing objects for userId={}, directoryPath={}", userId, directoryPath);
+        try {
+            ensureBucketExists();
+
+            String prefix = buildUserObjectPrefix(userId, directoryPath);
+
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(minioProperties.bucket())
+                            .prefix(prefix)
+                            .recursive(isRecursive)
+                            .build()
+            );
+
+            List<Item> items = new ArrayList<>();
+            for (Result<Item> result : results) {
+                items.add(result.get());
+            }
+            log.debug("Listed {} objects for userId={}, directoryPath={}", items.size(), userId, directoryPath);
+            return items;
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new StorageException("Storage error", e);
+        }
+    }
+
+    private void ensureBucketExists() throws StorageException {
+        try {
+            boolean exists = minioClient.bucketExists(
+                    BucketExistsArgs.builder()
+                            .bucket(minioProperties.bucket())
+                            .build()
+            );
+
+            if (!exists) {
+                log.info("Creating MinIO bucket: {}", minioProperties.bucket());
+                minioClient.makeBucket(
+                        MakeBucketArgs.builder()
+                                .bucket(minioProperties.bucket())
+                                .build()
+                );
+            }
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new StorageException("Storage error", e);
+        }
     }
 
     private List<Item> filter(Long userId, String query, List<Item> items) {
@@ -230,37 +277,11 @@ public class FileStorageService {
                 .toList();
     }
 
-    private void copyObject(Long userId, String fromPath, String toPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
-        String fromObjectName = fullObjectName(userId, fromPath);
-        String toObjectName = fullObjectName(userId, toPath);
+    private void copyObject(Long userId, String fromPath, String toPath) throws StorageException {
+        try {
+            String fromObjectName = fullObjectName(userId, fromPath);
+            String toObjectName = fullObjectName(userId, toPath);
 
-        minioClient.copyObject(CopyObjectArgs.builder()
-                .bucket(minioProperties.bucket())
-                .object(toObjectName)
-                .source(CopySource.builder()
-                        .bucket(minioProperties.bucket())
-                        .object(fromObjectName)
-                        .build())
-                .build());
-    }
-
-    private void copyObjectRecursively(Long userId, String fromPath, String toPath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
-        String fromPrefix = buildUserObjectPrefix(userId, fromPath);
-        String toPrefix = buildUserObjectPrefix(userId, toPath);
-
-        log.debug("Copying objects recursively for userId={}, path={}, fromPrefix={}, toPrefix={}", userId, fromPath, fromPrefix, toPrefix);
-        Iterable<Result<Item>> results = minioClient.listObjects(
-                ListObjectsArgs.builder()
-                        .bucket(minioProperties.bucket())
-                        .prefix(fromPrefix)
-                        .recursive(true)
-                        .build()
-        );
-
-        int copiedCount = 0;
-        for (Result<Item> result : results) {
-            String fromObjectName = result.get().objectName();
-            String toObjectName = toPrefix + fromObjectName.substring(fromPrefix.length());
             minioClient.copyObject(CopyObjectArgs.builder()
                     .bucket(minioProperties.bucket())
                     .object(toObjectName)
@@ -269,38 +290,76 @@ public class FileStorageService {
                             .object(fromObjectName)
                             .build())
                     .build());
-            copiedCount++;
-            log.debug("Copied object: {}", toObjectName);
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new StorageException("Storage error", e);
         }
-        log.info("Copied files in directory for userId={}, fromPath={}, toPath={},objectsCopied={}", userId, fromPath, toPath, copiedCount);
     }
 
-    private void deleteRecursively(Long userId, String resourcePath) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    private void copyObjectRecursively(Long userId, String fromPath, String toPath) throws StorageException {
+        String fromPrefix = buildUserObjectPrefix(userId, fromPath);
+        String toPrefix = buildUserObjectPrefix(userId, toPath);
+
+        log.debug("Copying objects recursively for userId={}, path={}, fromPrefix={}, toPrefix={}", userId, fromPath, fromPrefix, toPrefix);
+        try {
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(minioProperties.bucket())
+                            .prefix(fromPrefix)
+                            .recursive(true)
+                            .build()
+            );
+
+            int copiedCount = 0;
+            for (Result<Item> result : results) {
+                String fromObjectName = result.get().objectName();
+                String toObjectName = toPrefix + fromObjectName.substring(fromPrefix.length());
+                minioClient.copyObject(CopyObjectArgs.builder()
+                        .bucket(minioProperties.bucket())
+                        .object(toObjectName)
+                        .source(CopySource.builder()
+                                .bucket(minioProperties.bucket())
+                                .object(fromObjectName)
+                                .build())
+                        .build());
+                copiedCount++;
+                log.debug("Copied object: {}", toObjectName);
+            }
+            log.info("Copied files in directory for userId={}, fromPath={}, toPath={},objectsCopied={}",
+                    userId, fromPath, toPath, copiedCount);
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new StorageException("Storage error", e);
+        }
+    }
+
+    private void deleteRecursively(Long userId, String resourcePath) throws StorageException {
         String normalizedPath = FileUtils.normalizeParentPath(resourcePath);
         String prefix = buildUserObjectPrefix(userId, normalizedPath);
         log.debug("Deleting directory recursively for userId={}, path={}, prefix={}",
                 userId, resourcePath, prefix);
-
-        Iterable<Result<Item>> results = minioClient.listObjects(
-                ListObjectsArgs.builder()
-                        .bucket(minioProperties.bucket())
-                        .prefix(prefix)
-                        .recursive(true)
-                        .build()
-        );
-
-        int deletedCount = 0;
-        for (Result<Item> result : results) {
-            String objectName = result.get().objectName();
-            minioClient.removeObject(RemoveObjectArgs.builder()
-                    .bucket(minioProperties.bucket())
-                    .object(objectName)
-                    .build()
+        try {
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(minioProperties.bucket())
+                            .prefix(prefix)
+                            .recursive(true)
+                            .build()
             );
-            deletedCount++;
-            log.debug("Removed object: {}", objectName);
+
+            int deletedCount = 0;
+            for (Result<Item> result : results) {
+                String objectName = result.get().objectName();
+                minioClient.removeObject(RemoveObjectArgs.builder()
+                        .bucket(minioProperties.bucket())
+                        .object(objectName)
+                        .build()
+                );
+                deletedCount++;
+                log.debug("Removed object: {}", objectName);
+            }
+            log.info("Deleted directory for userId={}, path={}, objectsRemoved={}", userId, resourcePath, deletedCount);
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new StorageException("Storage error", e);
         }
-        log.info("Deleted directory for userId={}, path={}, objectsRemoved={}", userId, resourcePath, deletedCount);
     }
 
     private String userRootPrefix(Long userId) {
@@ -311,30 +370,8 @@ public class FileStorageService {
         return userRootPrefix(userId) + objectRelativePath;
     }
 
-    public String buildUserObjectPrefix(Long userId, String directoryPath) {
+    private String buildUserObjectPrefix(Long userId, String directoryPath) {
         String normalizedPath = FileUtils.normalizeParentPath(directoryPath);
         return fullObjectName(userId, normalizedPath);
-    }
-
-    public List<Item> listObjects(Long userId, String directoryPath, boolean isRecursive) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
-        log.debug("Listing objects for userId={}, directoryPath={}", userId, directoryPath);
-        ensureBucketExists();
-
-        String prefix = buildUserObjectPrefix(userId, directoryPath);
-
-        Iterable<Result<Item>> results = minioClient.listObjects(
-                ListObjectsArgs.builder()
-                        .bucket(minioProperties.bucket())
-                        .prefix(prefix)
-                        .recursive(isRecursive)
-                        .build()
-        );
-
-        List<Item> items = new ArrayList<>();
-        for (Result<Item> result : results) {
-            items.add(result.get());
-        }
-        log.debug("Listed {} objects for userId={}, directoryPath={}", items.size(), userId, directoryPath);
-        return items;
     }
 }

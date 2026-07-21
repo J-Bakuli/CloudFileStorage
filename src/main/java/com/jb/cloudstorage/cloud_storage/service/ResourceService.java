@@ -5,11 +5,11 @@ import com.jb.cloudstorage.cloud_storage.exception.DirectoryAlreadyExistsExcepti
 import com.jb.cloudstorage.cloud_storage.exception.FileAlreadyExistsException;
 import com.jb.cloudstorage.cloud_storage.exception.InvalidCredentialsException;
 import com.jb.cloudstorage.cloud_storage.exception.ResourceNotFoundException;
+import com.jb.cloudstorage.cloud_storage.exception.StorageException;
 import com.jb.cloudstorage.cloud_storage.model.ResourceType;
 import com.jb.cloudstorage.cloud_storage.model.UserEntity;
 import com.jb.cloudstorage.cloud_storage.repository.UserRepository;
 import com.jb.cloudstorage.cloud_storage.util.FileUtils;
-import io.minio.errors.MinioException;
 import io.minio.messages.Item;
 import org.apache.coyote.BadRequestException;
 import org.springframework.core.io.InputStreamResource;
@@ -20,9 +20,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Comparator;
 import java.util.List;
 
@@ -41,6 +38,9 @@ public class ResourceService {
 
         FileUtils.PathParts pathParts = FileUtils.splitPath(fullPath);
 
+        if (!fileStorageService.objectExists(userId, fullPath)) {
+            throw new ResourceNotFoundException(String.format("Resource is not found, path=%s", fullPath));
+        }
         Long size = pathParts.type() == ResourceType.FILE
                 ? fileStorageService.getObjectSize(userId, fullPath)
                 : null;
@@ -161,7 +161,7 @@ public class ResourceService {
         );
     }
 
-    public List<ResourceResponse> search(String query) throws MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
+    public List<ResourceResponse> search(String query) throws StorageException, BadRequestException {
         if (query.trim().isBlank()) {
             throw new BadRequestException("Query is empty");
         }
@@ -202,15 +202,15 @@ public class ResourceService {
 
     private List<ResourceResponse> buildResponse(Long userId, List<Item> objects) {
         return objects.stream().map(
-                item -> {
-                    String objectName = item.objectName();
-                    String relativePath = objectName.substring(("user-" + userId + "-files/").length());
-                    FileUtils.PathParts parts = FileUtils.splitPath(relativePath);
-                    ResourceType type = FileUtils.getResourceType(relativePath);
-                    Long size = type == ResourceType.DIRECTORY ? null : item.size();
-                    return new ResourceResponse(parts.parentPath(), parts.name(), size, type);
-                }
-        )
+                        item -> {
+                            String objectName = item.objectName();
+                            String relativePath = objectName.substring(("user-" + userId + "-files/").length());
+                            FileUtils.PathParts parts = FileUtils.splitPath(relativePath);
+                            ResourceType type = FileUtils.getResourceType(relativePath);
+                            Long size = type == ResourceType.DIRECTORY ? null : item.size();
+                            return new ResourceResponse(parts.parentPath(), parts.name(), size, type);
+                        }
+                )
                 .sorted(Comparator.comparing(ResourceResponse::type))
                 .toList();
     }
