@@ -16,7 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
     @Test
     void testGetDirectory_success() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         uploadBasicFile();
         getBasicFile();
         mockMvc.perform(
@@ -41,7 +41,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testGetDirectory_notFound() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "missing/")
@@ -59,7 +59,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testCreateDirectory_success() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "newdir")
@@ -82,7 +82,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testCreateDirectory_one_directory_per_time_success() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "level1/")
@@ -125,7 +125,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testCreateDirectory_several_directories_per_time_parentNotFound() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "level1/level2/")
@@ -136,7 +136,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testCreateDirectory_conflict() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "newdir")
@@ -156,7 +156,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testDownloadDirectory_notFound() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         get("/api/resource/download")
                                 .param("path", "missing/")
@@ -167,7 +167,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testDownloadDirectory_notFound_acceptOctetStream() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         get("/api/resource/download")
                                 .param("path", "missing/")
@@ -179,7 +179,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testDownloadDirectory_success() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "newdir")
@@ -217,7 +217,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testMoveDirectory_notFound() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         post("/api/resource/move")
                                 .param("from", "exam/")
@@ -229,7 +229,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testMoveDirectory_conflict() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "dir")
@@ -259,7 +259,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testMoveDirectory_move_success() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "dir")
@@ -300,7 +300,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testMoveDirectory_rename_success() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "dir")
@@ -341,7 +341,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testMoveDirectory_intoParent_success() throws Exception {
-        basicSignUp(session);
+        basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "other")
