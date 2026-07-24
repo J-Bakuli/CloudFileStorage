@@ -5,10 +5,7 @@ import com.jb.cloudstorage.cloud_storage.dto.SignUpRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
@@ -18,10 +15,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class AuthApiIntegrationTest extends BaseApiIntegrationTest {
-    @ServiceConnection
-    @Container
-    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:16");
-
     @ParameterizedTest
     @CsvSource({
             "AAA, username, 5 to 20",

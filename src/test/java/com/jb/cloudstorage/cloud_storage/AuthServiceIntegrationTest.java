@@ -10,58 +10,40 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
 
-@ActiveProfiles("test")
-@Testcontainers
-@SpringBootTest
-@Transactional
-public class AuthServiceIntegrationTest {
-    @ServiceConnection
-    @Container
-    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:16");
+public class AuthServiceIntegrationTest extends BaseApiIntegrationTest {
     @Autowired
-    AuthService authService;
+    private AuthService authService;
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
     @Autowired
-    PasswordEncoder passwordEncoder;
-
-    private static final String username = "TestCloud";
-    private static final String rawPassword = "password123";
-
+    private PasswordEncoder passwordEncoder;
     private MockHttpServletRequest mockRequest;
     private MockHttpServletResponse mockResponse;
 
     @BeforeEach
-    void setUp() {
+    void setUpMocks() {
         mockRequest = new MockHttpServletRequest();
         mockResponse = new MockHttpServletResponse();
     }
 
     @Test
     void testSignUp_savesUserWithEncodedPassword() {
-        SignUpRequest signUpRequest = new SignUpRequest(username, rawPassword);
+        SignUpRequest signUpRequest = new SignUpRequest(BASIC_USERNAME, BASIC_PASSWORD);
         UserResponse userResponse = authService.register(signUpRequest, mockRequest, mockResponse);
-        UserEntity user = userRepository.findByUsername(username);
+        UserEntity user = userRepository.findByUsername(BASIC_USERNAME);
 
         Assertions.assertNotNull(user);
-        Assertions.assertTrue(passwordEncoder.matches(rawPassword, user.getPassword()));
-        Assertions.assertEquals(username, userResponse.username());
+        Assertions.assertTrue(passwordEncoder.matches(BASIC_PASSWORD, user.getPassword()));
+        Assertions.assertEquals(BASIC_USERNAME, userResponse.username());
     }
 
     @Test
     void testSignUp_duplicateUsername() {
-        SignUpRequest signUpRequest = new SignUpRequest(username, rawPassword);
+        SignUpRequest signUpRequest = new SignUpRequest(BASIC_USERNAME, BASIC_PASSWORD);
         authService.register(signUpRequest, mockRequest, mockResponse);
         Assertions.assertThrows(UsernameAlreadyExistsException.class,
                 () -> authService.register(signUpRequest, mockRequest, mockResponse));
