@@ -270,7 +270,7 @@ public class FileStorageService {
         return items.stream().filter(
                         item -> {
                             String objectName = item.objectName();
-                            String relativePath = objectName.substring(("user-" + userId + "-files/").length());
+                            String relativePath = FileUtils.getRelativePath(userId, objectName);
                             return relativePath.toLowerCase().contains(lowerQuery);
                         }
                 )
@@ -362,12 +362,8 @@ public class FileStorageService {
         }
     }
 
-    private String userRootPrefix(Long userId) {
-        return "user-" + userId + "-files/";
-    }
-
     private String fullObjectName(Long userId, String objectRelativePath) {
-        return userRootPrefix(userId) + objectRelativePath;
+        return FileUtils.userRootPrefix(userId) + objectRelativePath;
     }
 
     private String buildUserObjectPrefix(Long userId, String directoryPath) {

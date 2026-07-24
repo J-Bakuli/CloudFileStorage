@@ -204,7 +204,7 @@ public class ResourceService {
         return objects.stream().map(
                         item -> {
                             String objectName = item.objectName();
-                            String relativePath = objectName.substring(("user-" + userId + "-files/").length());
+                            String relativePath = FileUtils.getRelativePath(userId, objectName);
                             FileUtils.PathParts parts = FileUtils.splitPath(relativePath);
                             ResourceType type = FileUtils.getResourceType(relativePath);
                             Long size = type == ResourceType.DIRECTORY ? null : item.size();
