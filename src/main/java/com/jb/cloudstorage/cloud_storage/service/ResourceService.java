@@ -107,9 +107,13 @@ public class ResourceService {
 
     public void delete(String resourcePath) throws Exception {
         Long userId = getCurrentUserId();
+        String normalizedPath = FileUtils.normalizeParentPath(resourcePath);
 
-        if (!fileStorageService.objectExists(userId, resourcePath)) {
-            throw new ResourceNotFoundException(String.format("Resource is not found, path=%s", resourcePath));
+        FileUtils.PathParts parts = FileUtils.splitPath(normalizedPath);
+        String parentPath = parts.parentPath();
+
+        if (!parentExists(userId, parentPath)) {
+            throw new ResourceNotFoundException(String.format("Parent directory is not found, path=%s", parentPath));
         }
 
         fileStorageService.delete(userId, resourcePath);
