@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,9 +38,9 @@ public class ResourceController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public List<ResourceResponse> upload(
             @RequestParam("path") String path,
-            @RequestPart("file") MultipartFile file
+            @RequestParam("object") List<MultipartFile> objects
     ) throws Exception {
-        return resourceService.upload(path, file);
+        return resourceService.upload(path, objects);
     }
 
     @Operation(summary = "Get resource info")

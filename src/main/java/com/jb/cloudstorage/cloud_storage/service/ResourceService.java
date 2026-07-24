@@ -20,6 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -64,16 +65,20 @@ public class ResourceService {
         return buildResponse(userId, objects);
     }
 
-    public List<ResourceResponse> upload(String folderPath, MultipartFile file) throws Exception { //Todo remove throwing Exception later
+    public List<ResourceResponse> upload(String folderPath, List<MultipartFile> objects) throws Exception { //Todo remove throwing Exception later
         Long userId = getCurrentUserId();
+        List<ResourceResponse> response = new ArrayList<>();
 
-        String objectPath = FileUtils.joinPath(folderPath, file.getOriginalFilename());
-        if (fileStorageService.objectExists(userId, objectPath)) {
-            throw new FileAlreadyExistsException(String.format("File already exists, path=%s", objectPath));
+        for (MultipartFile object : objects) {
+            String objectPath = FileUtils.joinPath(folderPath, object.getOriginalFilename());
+            if (fileStorageService.objectExists(userId, objectPath)) {
+                throw new FileAlreadyExistsException(String.format("File already exists, path=%s", objectPath));
+            }
+
+            fileStorageService.uploadFile(userId, folderPath, object);
+            response = List.of(buildResponse(folderPath, object));
         }
-
-        fileStorageService.uploadFile(userId, folderPath, file);
-        return List.of(buildResponse(folderPath, file));
+        return response;
     }
 
     public ResourceResponse createDirectory(String directoryPath) throws Exception {
