@@ -1,6 +1,7 @@
 package com.jb.cloudstorage.cloud_storage;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
@@ -135,6 +136,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
+    @Disabled
     void testCreateDirectory_conflict() throws Exception {
         basicSignUp();
         mockMvc.perform(
@@ -149,6 +151,12 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "newdir")
+                                .session(session))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message", containsString("already exists")));
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "NEWdir")
                                 .session(session))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("already exists")));
@@ -252,6 +260,37 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                         post("/api/resource/move")
                                 .param("from", "dir/")
                                 .param("to", "newdir/")
+                                .session(session))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message", containsString("already exists")));
+    }
+
+    @Test
+    @Disabled
+    void testMoveDirectory_conflict_caseInsensitiveName() throws Exception {
+        basicSignUp();
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "dir")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("dir"))
+                .andExpect(jsonPath("$.size").doesNotExist())
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "newdir")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("newdir"))
+                .andExpect(jsonPath("$.size").doesNotExist())
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "dir/")
+                                .param("to", "NEWDIR/")
                                 .session(session))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("already exists")));

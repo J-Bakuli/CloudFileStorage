@@ -1,6 +1,9 @@
 package com.jb.cloudstorage.cloud_storage;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
@@ -62,6 +65,31 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
+                                .param("path", "")
+                                .session(session))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message", containsString("already exists")));
+    }
+
+    @Test
+    @Disabled
+    void testUploadFile_conflict_caseInsensitiveName() throws Exception {
+        basicSignUp();
+        MockMultipartFile upperCaseNameFile = new MockMultipartFile(
+                "object",
+                "TEST.TXT",
+                MediaType.TEXT_PLAIN_VALUE,
+                content
+        );
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(upperCaseNameFile)
                                 .param("path", "")
                                 .session(session))
                 .andExpect(status().isConflict())
@@ -194,6 +222,26 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                         post("/api/resource/move")
                                 .param("from", "test/test.txt")
                                 .param("to", "exam/test.txt")
+                                .session(session))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message", containsString("already exists")));
+    }
+
+    @Test
+    @Disabled
+    void testMoveFile_conflict_caseInsensitiveName() throws Exception {
+        basicSignUp();
+        uploadBasicFile();
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "test")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "test/test.txt")
+                                .param("to", "exam/TEST.TXT")
                                 .session(session))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("already exists")));
