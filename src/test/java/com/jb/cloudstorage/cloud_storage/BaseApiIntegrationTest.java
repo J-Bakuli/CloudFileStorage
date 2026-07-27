@@ -41,7 +41,7 @@ public abstract class BaseApiIntegrationTest {
     protected MockHttpSession session;
     protected final byte[] content = "hello".getBytes();
     protected final MockMultipartFile file = new MockMultipartFile(
-            "file",
+            "object",
             "test.txt",
             MediaType.TEXT_PLAIN_VALUE,
             content

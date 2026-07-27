@@ -107,13 +107,10 @@ public class ResourceService {
 
     public void delete(String resourcePath) throws Exception {
         Long userId = getCurrentUserId();
-        String normalizedPath = FileUtils.normalizeParentPath(resourcePath);
+        ResourceType type = FileUtils.getResourceType(resourcePath);
 
-        FileUtils.PathParts parts = FileUtils.splitPath(normalizedPath);
-        String parentPath = parts.parentPath();
-
-        if (!parentExists(userId, parentPath)) {
-            throw new ResourceNotFoundException(String.format("Parent directory is not found, path=%s", parentPath));
+        if (!resourceExists(userId, resourcePath, type)) {
+            throw new ResourceNotFoundException(String.format("Resource is not found, path=%s", resourcePath));
         }
 
         fileStorageService.delete(userId, resourcePath);
@@ -121,10 +118,9 @@ public class ResourceService {
 
     public ResponseEntity<InputStreamResource> download(String resourcePath) throws Exception {
         Long userId = getCurrentUserId();
-
         ResourceType type = FileUtils.getResourceType(resourcePath);
 
-        if (!fileStorageService.objectExists(userId, resourcePath)) {
+        if (!resourceExists(userId, resourcePath, type)) {
             throw new ResourceNotFoundException(String.format("Resource is not found, path=%s", resourcePath));
         }
 
@@ -144,17 +140,21 @@ public class ResourceService {
 
     public ResourceResponse move(String fromPath, String toPath) throws Exception {
         Long userId = getCurrentUserId();
+        ResourceType fromType = FileUtils.getResourceType(fromPath);
+        ResourceType toType = FileUtils.getResourceType(toPath);
 
-        if (!fileStorageService.objectExists(userId, fromPath)) {
+        if (!resourceExists(userId, fromPath, fromType)) {
             throw new ResourceNotFoundException(String.format("Resource is not found, path=%s", fromPath));
         }
 
-        if (fileStorageService.objectExists(userId, toPath)) {
+        if (resourceExists(userId, toPath, toType)) {
+            if (toType == ResourceType.DIRECTORY) {
+                throw new DirectoryAlreadyExistsException(String.format("Directory already exists, path=%s", toPath));
+            }
             throw new FileAlreadyExistsException(String.format("File already exists, path=%s", toPath));
         }
 
-        ResourceType type = FileUtils.getResourceType(fromPath);
-        if (type == ResourceType.FILE) {
+        if (fromType == ResourceType.FILE) {
             fileStorageService.moveFile(userId, fromPath, toPath);
         } else {
             fileStorageService.moveDirectory(userId, fromPath, toPath);
@@ -177,6 +177,18 @@ public class ResourceService {
         Long userId = getCurrentUserId();
         List<Item> items = fileStorageService.search(userId, query);
         return buildResponse(userId, items);
+    }
+
+    private boolean resourceExists(Long userId, String resourcePath, ResourceType type) throws Exception {
+        return type == ResourceType.FILE
+                ? fileStorageService.objectExists(userId, resourcePath)
+                : directoryExists(userId, resourcePath);
+    }
+
+    private boolean directoryExists(Long userId, String directoryPath) throws Exception {
+        String path = FileUtils.normalizeParentPath(directoryPath);
+        return fileStorageService.objectExists(userId, path)
+                || !fileStorageService.listObjects(userId, path, false).isEmpty();
     }
 
     private Long getCurrentUserId() {
