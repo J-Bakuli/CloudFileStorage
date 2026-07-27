@@ -234,6 +234,7 @@ public class FileStorageService {
             for (Result<Item> result : results) {
                 items.add(result.get());
             }
+            items.removeIf(item -> item.objectName().equals(prefix));
             log.debug("Listed {} objects for userId={}, directoryPath={}", items.size(), userId, directoryPath);
             return items;
         } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
