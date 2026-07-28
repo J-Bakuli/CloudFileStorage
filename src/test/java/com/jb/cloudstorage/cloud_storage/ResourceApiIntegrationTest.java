@@ -72,7 +72,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testUploadFile_conflict_caseInsensitiveName() throws Exception {
         basicSignUp();
         MockMultipartFile upperCaseNameFile = new MockMultipartFile(
@@ -228,7 +227,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testMoveFile_conflict_caseInsensitiveName() throws Exception {
         basicSignUp();
         uploadBasicFile();
@@ -245,6 +243,59 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                                 .session(session))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("already exists")));
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "test/test.txt")
+                                .param("to", "test/TEST.TXT")
+                                .session(session))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message", containsString("already exists")));
+    }
+
+    @Test
+    void testMoveFile_sameNameDifferentParent_caseInsensitive_success() throws Exception {
+        basicSignUp();
+        uploadBasicFile();
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "daily")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "daily/test.txt")
+                                .param("to", "projects/TEST.TXT")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.path").value("projects/"))
+                .andExpect(jsonPath("$.name").value("TEST.TXT"))
+                .andExpect(jsonPath("$.type").value("FILE"));
+    }
+
+    @Test
+    void testMoveFile_sameNameAsDirectory_differentType_success() throws Exception {
+        basicSignUp();
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "TEST.TXT/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "other")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "other/test.txt")
+                                .param("to", "test.txt")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("test.txt"))
+                .andExpect(jsonPath("$.type").value("FILE"));
     }
 
     @Test

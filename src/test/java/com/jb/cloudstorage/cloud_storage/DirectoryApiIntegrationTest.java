@@ -316,6 +316,72 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                                 .session(session))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("already exists")));
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "dir/")
+                                .param("to", " DIR /")
+                                .session(session))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message", containsString("already exists")));
+    }
+
+    @Test
+    void testMoveDirectory_sameNameDifferentParent_caseInsensitive_success() throws Exception {
+        basicSignUp();
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "projects/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "projects/newdir/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "archive/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "dir/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "dir/")
+                                .param("to", "archive/NEWDIR/")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.path").value("archive/"))
+                .andExpect(jsonPath("$.name").value("NEWDIR"))
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+    }
+
+    @Test
+    void testMoveDirectory_sameNameAsFile_differentType_success() throws Exception {
+        basicSignUp();
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "dir/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "dir/")
+                                .param("to", "TEST.TXT/")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("TEST.TXT"))
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
     }
 
     @Test
