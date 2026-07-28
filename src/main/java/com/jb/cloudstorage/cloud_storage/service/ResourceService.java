@@ -68,12 +68,14 @@ public class ResourceService {
     public List<ResourceResponse> upload(String folderPath, List<MultipartFile> objects) throws Exception { //Todo remove throwing Exception later
         Long userId = getCurrentUserId();
         List<ResourceResponse> response = new ArrayList<>();
+        String normalizedPath = FileUtils.normalizeParentPath(folderPath);
 
         for (MultipartFile object : objects) {
             String objectPath = FileUtils.joinPath(folderPath, object.getOriginalFilename());
             if (fileStorageService.objectExists(userId, objectPath)) {
                 throw new FileAlreadyExistsException(String.format("File already exists, path=%s", objectPath));
             }
+            ensureNoCaseInsensitiveConflict(userId, normalizedPath, object.getOriginalFilename(), ResourceType.FILE);
 
             fileStorageService.uploadFile(userId, folderPath, object);
             response = List.of(buildResponse(folderPath, object));

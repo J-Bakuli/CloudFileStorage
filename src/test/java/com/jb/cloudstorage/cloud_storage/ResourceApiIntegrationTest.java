@@ -83,13 +83,13 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
-                                .param("path", "")
+                                .param("path", "exam/")
                                 .session(session))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(upperCaseNameFile)
-                                .param("path", "")
+                                .param("path", "exam/")
                                 .session(session))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("already exists")));
