@@ -87,6 +87,8 @@ public class ResourceService {
 
         FileUtils.PathParts parts = FileUtils.splitPath(normalizedPath);
         String parentPath = parts.parentPath();
+        String requestedName = parts.name();
+        ResourceType type = parts.type();
 
         if (fileStorageService.objectExists(userId, normalizedPath)) {
             throw new DirectoryAlreadyExistsException(String.format("Directory already exists, path=%s", directoryPath));
@@ -94,6 +96,10 @@ public class ResourceService {
 
         if (!parentExists(userId, parentPath)) {
             throw new ResourceNotFoundException(String.format("Parent directory is not found, path=%s", parentPath));
+        }
+
+        if (type == ResourceType.DIRECTORY) {
+            ensureNoCaseInsensitiveDirectoryConflict(userId, parentPath, requestedName);
         }
 
         fileStorageService.createDirectory(userId, normalizedPath);
@@ -177,6 +183,19 @@ public class ResourceService {
         Long userId = getCurrentUserId();
         List<Item> items = fileStorageService.search(userId, query);
         return buildResponse(userId, items);
+    }
+
+    private void ensureNoCaseInsensitiveDirectoryConflict(Long userId, String parentPath, String directoryName) {
+        List<Item> items = fileStorageService.listObjects(userId, parentPath, false);
+        for (Item item : items) {
+            String objectName = item.objectName();
+            String relativePath = FileUtils.getRelativePath(userId, objectName);
+            FileUtils.PathParts pathParts = FileUtils.splitPath(relativePath);
+
+            if (pathParts.name().equalsIgnoreCase(directoryName.trim())) {
+                throw new DirectoryAlreadyExistsException(String.format("Directory already exists, path=%s", directoryName));
+            }
+        }
     }
 
     private boolean resourceExists(Long userId, String resourcePath, ResourceType type) throws Exception {

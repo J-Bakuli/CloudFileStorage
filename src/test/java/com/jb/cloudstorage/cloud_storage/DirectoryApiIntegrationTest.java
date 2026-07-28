@@ -136,30 +136,53 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
-    void testCreateDirectory_conflict() throws Exception {
+    void testCreateDirectory_sameParent_caseInsensitive_conflict() throws Exception {
         basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
-                                .param("path", "newdir")
+                                .param("path", "projects")
                                 .session(session))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
-                .andExpect(jsonPath("$.name").value("newdir"))
+                .andExpect(jsonPath("$.name").value("projects"))
                 .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
         mockMvc.perform(
                         post("/api/directory")
-                                .param("path", "newdir")
+                                .param("path", "projects/newdir/")
                                 .session(session))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message", containsString("already exists")));
+                .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/directory")
-                                .param("path", "NEWdir")
+                                .param("path", "projects/ NEWdir /")
                                 .session(session))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("already exists")));
+    }
+
+    @Test
+    void testCreateDirectory_sameNameDifferentParent_success() throws Exception {
+        basicSignUp();
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "projects/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "projects/newdir/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "archive/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "archive/NEWDIR")
+                                .session(session))
+                .andExpect(status().isCreated());
     }
 
     @Test
