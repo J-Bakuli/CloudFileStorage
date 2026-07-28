@@ -88,7 +88,6 @@ public class ResourceService {
         FileUtils.PathParts parts = FileUtils.splitPath(normalizedPath);
         String parentPath = parts.parentPath();
         String requestedName = parts.name();
-        ResourceType type = parts.type();
 
         if (fileStorageService.objectExists(userId, normalizedPath)) {
             throw new DirectoryAlreadyExistsException(String.format("Directory already exists, path=%s", directoryPath));
@@ -98,9 +97,7 @@ public class ResourceService {
             throw new ResourceNotFoundException(String.format("Parent directory is not found, path=%s", parentPath));
         }
 
-        if (type == ResourceType.DIRECTORY) {
-            ensureNoCaseInsensitiveDirectoryConflict(userId, parentPath, requestedName);
-        }
+        ensureNoCaseInsensitiveDirectoryConflict(userId, parentPath, requestedName);
 
         fileStorageService.createDirectory(userId, normalizedPath);
 
@@ -149,6 +146,11 @@ public class ResourceService {
         ResourceType fromType = FileUtils.getResourceType(fromPath);
         ResourceType toType = FileUtils.getResourceType(toPath);
 
+        String normalizedPath = FileUtils.normalizeParentPath(toPath);
+        FileUtils.PathParts parts = FileUtils.splitPath(normalizedPath);
+        String parentPath = parts.parentPath();
+        String requestedName = parts.name();
+
         if (!resourceExists(userId, fromPath, fromType)) {
             throw new ResourceNotFoundException(String.format("Resource is not found, path=%s", fromPath));
         }
@@ -158,6 +160,12 @@ public class ResourceService {
                 throw new DirectoryAlreadyExistsException(String.format("Directory already exists, path=%s", toPath));
             }
             throw new FileAlreadyExistsException(String.format("File already exists, path=%s", toPath));
+        }
+
+        if (toType == ResourceType.DIRECTORY) {
+            ensureNoCaseInsensitiveDirectoryConflict(userId, parentPath, requestedName);
+        } else {
+            ensureNoCaseInsensitiveFileConflict(userId, parentPath, requestedName);
         }
 
         if (fromType == ResourceType.FILE) {
@@ -192,8 +200,21 @@ public class ResourceService {
             String relativePath = FileUtils.getRelativePath(userId, objectName);
             FileUtils.PathParts pathParts = FileUtils.splitPath(relativePath);
 
-            if (pathParts.name().equalsIgnoreCase(directoryName.trim())) {
+            if (pathParts.type() == ResourceType.DIRECTORY && pathParts.name().equalsIgnoreCase(directoryName.trim())) {
                 throw new DirectoryAlreadyExistsException(String.format("Directory already exists, path=%s", directoryName));
+            }
+        }
+    }
+
+    private void ensureNoCaseInsensitiveFileConflict(Long userId, String parentPath, String fileName) {
+        List<Item> items = fileStorageService.listObjects(userId, parentPath, false);
+        for (Item item : items) {
+            String objectName = item.objectName();
+            String relativePath = FileUtils.getRelativePath(userId, objectName);
+            FileUtils.PathParts pathParts = FileUtils.splitPath(relativePath);
+
+            if (pathParts.type() == ResourceType.FILE && pathParts.name().equalsIgnoreCase(fileName.trim())) {
+                throw new FileAlreadyExistsException(String.format("File already exists, path=%s", fileName));
             }
         }
     }
