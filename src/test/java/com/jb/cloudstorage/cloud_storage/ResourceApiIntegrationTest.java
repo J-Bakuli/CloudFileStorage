@@ -1,6 +1,5 @@
 package com.jb.cloudstorage.cloud_storage;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -150,6 +149,32 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "newdir/")
+                                .session(session))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testDeleteDirectory_createdViaFileUpload_success() throws Exception {
+        basicSignUp();
+        uploadBasicFile();
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].path").value(""))
+                .andExpect(jsonPath("$[0].name").value("exam"))
+                .andExpect(jsonPath("$[0].size").doesNotExist())
+                .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
+        mockMvc.perform(
+                        delete("/api/resource")
+                                .param("path", "exam/")
+                                .session(session))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "exam/")
                                 .session(session))
                 .andExpect(status().isNotFound());
     }
