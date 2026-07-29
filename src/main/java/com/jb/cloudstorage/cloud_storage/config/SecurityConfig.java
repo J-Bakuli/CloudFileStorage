@@ -26,12 +26,12 @@ public class SecurityConfig {
         http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
-                .anonymous(AbstractHttpConfigurer::disable)
                 .securityContext(sc -> sc.securityContextRepository(securityContextRepository))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/login/**", "/registration/**").permitAll()
                         .requestMatchers("/", "/index.html", "/assets/**", "/config.js").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
