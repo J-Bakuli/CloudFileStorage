@@ -2,6 +2,7 @@ package com.jb.cloudstorage.cloud_storage.controller;
 
 import com.jb.cloudstorage.cloud_storage.dto.ResourceResponse;
 import com.jb.cloudstorage.cloud_storage.service.ResourceService;
+import com.jb.cloudstorage.cloud_storage.util.SafePath;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -9,6 +10,7 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+@Validated
 @RestController
 @RequestMapping("/api/resource")
 @Tag(name = "Resource")
@@ -37,7 +40,7 @@ public class ResourceController {
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public List<ResourceResponse> upload(
-            @RequestParam("path") String path,
+            @RequestParam("path") @SafePath String path,
             @RequestParam("object") List<MultipartFile> objects
     ) throws Exception {
         return resourceService.upload(path, objects);
@@ -50,7 +53,7 @@ public class ResourceController {
     @ApiResponse(responseCode = "404", description = "Resource is not found")
     @GetMapping
     public ResourceResponse get(
-            @RequestParam("path") String path
+            @RequestParam("path") @SafePath String path
     ) throws Exception {
         return resourceService.get(path);
     }
@@ -63,7 +66,7 @@ public class ResourceController {
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(
-            @RequestParam("path") String path
+            @RequestParam("path") @SafePath String path
     ) throws Exception {
         resourceService.delete(path);
     }
@@ -75,7 +78,7 @@ public class ResourceController {
     @ApiResponse(responseCode = "404", description = "Resource is not found")
     @GetMapping("/download")
     public ResponseEntity<InputStreamResource> download(
-            @RequestParam("path") String path
+            @RequestParam("path") @SafePath String path
     ) throws Exception {
         return resourceService.download(path);
     }
@@ -88,7 +91,7 @@ public class ResourceController {
     @ApiResponse(responseCode = "409", description = "Resource from path to already exists")
     @PostMapping("/move")
     public ResourceResponse move(
-            @RequestParam("from") String fromPath, @RequestParam("to") String toPath
+            @RequestParam("from") @SafePath String fromPath, @RequestParam("to") @SafePath String toPath
     ) throws Exception {
         return resourceService.move(fromPath, toPath);
     }

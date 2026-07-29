@@ -1,6 +1,5 @@
 package com.jb.cloudstorage.cloud_storage;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -11,14 +10,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class AuthValidationTest extends BaseApiIntegrationTest {
-    @Disabled
+public class PathValidationTest extends BaseApiIntegrationTest {
     @ParameterizedTest
     @ValueSource(strings = {
             "../user-1-files/main.txt",
             "folder\\main.txt",
             "folder//main.txt",
-            "/maim.txt"
+            "/main.txt"
     })
     void testGetResource_invalidPaths(String path) throws Exception {
         basicSignUp();
@@ -31,7 +29,6 @@ public class AuthValidationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testResourceEndpoints_pathWithParentTraversal() throws Exception {
         basicSignUp();
         String invalidPath = "../user-1-files/main.txt";

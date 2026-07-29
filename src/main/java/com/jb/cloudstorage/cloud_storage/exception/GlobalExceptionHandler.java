@@ -4,6 +4,7 @@ import com.jb.cloudstorage.cloud_storage.dto.ApiErrorResponse;
 import com.jb.cloudstorage.cloud_storage.dto.ApiFieldError;
 import io.minio.errors.ErrorResponseException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,16 @@ public class GlobalExceptionHandler {
         log.debug("Unauthorized request: uri={}, message={}", request.getRequestURI(), ex.getMessage());
         return jsonError(
                 HttpStatus.UNAUTHORIZED,
+                ex.getMessage(),
+                request.getRequestURI(),
+                List.of());
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiErrorResponse> handleConstraintViolationException(ConstraintViolationException ex, HttpServletRequest request) {
+        log.debug("Constraint violation request: uri={}, message={}", request.getRequestURI(), ex.getMessage());
+        return jsonError(
+                HttpStatus.BAD_REQUEST,
                 ex.getMessage(),
                 request.getRequestURI(),
                 List.of());
