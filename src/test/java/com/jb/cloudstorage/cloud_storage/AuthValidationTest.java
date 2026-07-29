@@ -1,0 +1,69 @@
+package com.jb.cloudstorage.cloud_storage;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+public class AuthValidationTest extends BaseApiIntegrationTest {
+    @Disabled
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "../user-1-files/main.txt",
+            "folder\\main.txt",
+            "folder//main.txt",
+            "/maim.txt"
+    })
+    void testGetResource_invalidPaths(String path) throws Exception {
+        basicSignUp();
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", path)
+                                .session(session))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Invalid path")));
+    }
+
+    @Test
+    @Disabled
+    void testResourceEndpoints_pathWithParentTraversal() throws Exception {
+        basicSignUp();
+        String invalidPath = "../user-1-files/main.txt";
+
+        mockMvc.perform(
+                        get("/api/resource/download")
+                                .param("path", invalidPath)
+                                .session(session))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Invalid path")));
+
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", invalidPath)
+                                .param("to", "stolen.txt")
+                                .session(session))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Invalid path")));
+
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "secret.txt")
+                                .param("to", invalidPath)
+                                .session(session))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Invalid path")));
+
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "../user-1-files/secret/")
+                                .session(session))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Invalid path")));
+    }
+}
