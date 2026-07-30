@@ -12,6 +12,7 @@ import com.jb.cloudstorage.cloud_storage.repository.UserRepository;
 import com.jb.cloudstorage.cloud_storage.util.FileUtils;
 import io.minio.messages.Item;
 import org.apache.coyote.BadRequestException;
+import org.flywaydb.core.internal.util.StringUtils;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -71,11 +72,18 @@ public class ResourceService {
         String normalizedPath = FileUtils.normalizeParentPath(folderPath);
 
         for (MultipartFile object : objects) {
-            String objectPath = FileUtils.joinPath(folderPath, object.getOriginalFilename());
+            if (object == null || object.isEmpty()) {
+                throw new BadRequestException("File is null or empty");
+            }
+            String filename = object.getOriginalFilename();
+            if (!StringUtils.hasText(filename)) {
+                throw new BadRequestException("File name is missing");
+            }
+            String objectPath = FileUtils.joinPath(folderPath, filename);
             if (fileStorageService.objectExists(userId, objectPath)) {
                 throw new FileAlreadyExistsException(String.format("File already exists, path=%s", objectPath));
             }
-            ensureNoCaseInsensitiveConflict(userId, normalizedPath, object.getOriginalFilename(), ResourceType.FILE);
+            ensureNoCaseInsensitiveConflict(userId, normalizedPath, filename, ResourceType.FILE);
 
             fileStorageService.uploadFile(userId, folderPath, object);
             response = List.of(buildResponse(folderPath, object));

@@ -31,6 +31,45 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
+    void testUpload_emptyFile() throws Exception {
+        basicSignUp();
+        byte[] content = "".getBytes();
+        MockMultipartFile emptyFile = new MockMultipartFile(
+                "object",
+                "text.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                content
+        );
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(emptyFile)
+                                .param("path", "")
+                                .session(session))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("File is null or empty"));
+    }
+
+    @Test
+    void testUpload_nullFilename() throws Exception {
+        basicSignUp();
+        MockMultipartFile fileWithoutName = new MockMultipartFile(
+                "object",
+                null,
+                MediaType.TEXT_PLAIN_VALUE,
+                "hello".getBytes()
+        );
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(fileWithoutName)
+                                .param("path", "")
+                                .session(session))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("File name is missing"));
+    }
+
+    @Test
     void testGet_unauthenticated() throws Exception {
         mockMvc.perform(
                         get("/api/resource")

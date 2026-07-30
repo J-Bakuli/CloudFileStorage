@@ -50,9 +50,9 @@ public class FileStorageService {
         log.debug("Uploading file for userId={}, relativePath={}, filename={}, size={}",
                 userId, relativePath, file.getOriginalFilename(), file.getSize());
         ensureBucketExists();
-        String objectPath = FileUtils.joinPath(relativePath, file.getOriginalFilename());
-        String objectName = fullObjectName(userId, objectPath);
         try {
+            String objectPath = FileUtils.joinPath(relativePath, file.getOriginalFilename());
+            String objectName = fullObjectName(userId, objectPath);
             minioClient.putObject(PutObjectArgs.builder()
                     .bucket(minioProperties.bucket())
                     .object(objectName)
