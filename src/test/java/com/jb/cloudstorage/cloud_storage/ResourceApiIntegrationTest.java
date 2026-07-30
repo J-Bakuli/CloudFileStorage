@@ -23,7 +23,11 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                         multipart("/api/resource")
                                 .file(file)
                                 .param("path", ""))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.message").value("Unauthorized request"))
+                .andExpect(jsonPath("$.path").value("/api/resource"));
     }
 
     @Test
@@ -31,7 +35,11 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         get("/api/resource")
                                 .param("path", "test.txt"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.message").value("Unauthorized request"))
+                .andExpect(jsonPath("$.path").value("/api/resource"));
     }
 
     @Test
@@ -99,7 +107,11 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         delete("/api/resource")
                                 .param("path", "test.txt"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.message").value("Unauthorized request"))
+                .andExpect(jsonPath("$.path").value("/api/resource"));
     }
 
     @Test
@@ -184,7 +196,11 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         get("/api/resource/download")
                                 .param("path", "test.txt"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.message").value("Unauthorized request"))
+                .andExpect(jsonPath("$.path").value("/api/resource/download"));
     }
 
     @Test
@@ -217,7 +233,11 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                         post("/api/resource/move")
                                 .param("from", "exam/test.txt")
                                 .param("to", "test/test.txt"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.message").value("Unauthorized request"))
+                .andExpect(jsonPath("$.path").value("/api/resource/move"));
     }
 
     @Test
@@ -383,7 +403,11 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         get("/api/resource/search")
                                 .param("query", "timelines"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.message").value("Unauthorized request"))
+                .andExpect(jsonPath("$.path").value("/api/resource/search"));
     }
 
     @Test

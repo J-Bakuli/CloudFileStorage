@@ -6,7 +6,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -37,7 +36,11 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "exam/"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.message").value("Unauthorized request"))
+                .andExpect(jsonPath("$.path").value("/api/directory"));
     }
 
     @Test
@@ -55,7 +58,11 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "test"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.message").value("Unauthorized request"))
+                .andExpect(jsonPath("$.path").value("/api/directory"));
     }
 
     @Test
@@ -243,7 +250,11 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                         post("/api/resource/move")
                                 .param("from", "exam/")
                                 .param("to", "test/"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.message").value("Unauthorized request"))
+                .andExpect(jsonPath("$.path").value("/api/resource/move"));
     }
 
     @Test

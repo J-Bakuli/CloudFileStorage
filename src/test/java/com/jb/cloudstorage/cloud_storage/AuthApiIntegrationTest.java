@@ -126,7 +126,7 @@ public class AuthApiIntegrationTest extends BaseApiIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(signInRequest)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message", is("Invalid username or password")));
+                .andExpect(jsonPath("$.message", is("Unauthorized request")));
     }
 
     @Test
@@ -139,7 +139,7 @@ public class AuthApiIntegrationTest extends BaseApiIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(signInRequest)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message", is("Invalid username or password")));
+                .andExpect(jsonPath("$.message", is("Unauthorized request")));
     }
 
     @Test
@@ -159,13 +159,21 @@ public class AuthApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         get("/api/user/me")
                                 .session(session))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.message").value("Unauthorized request"))
+                .andExpect(jsonPath("$.path").value("/api/user/me"));
     }
 
     @Test
     void testUserMe_unauthenticated() throws Exception {
         mockMvc.perform(
                         get("/api/user/me"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.message").value("Unauthorized request"))
+                .andExpect(jsonPath("$.path").value("/api/user/me"));
     }
 }

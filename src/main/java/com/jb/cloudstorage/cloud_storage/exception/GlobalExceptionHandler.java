@@ -25,7 +25,7 @@ public class GlobalExceptionHandler {
         log.debug("Unauthorized request: uri={}, message={}", request.getRequestURI(), ex.getMessage());
         return jsonError(
                 HttpStatus.UNAUTHORIZED,
-                ex.getMessage(),
+                "Unauthorized request",
                 request.getRequestURI(),
                 List.of());
     }
@@ -35,7 +35,7 @@ public class GlobalExceptionHandler {
         log.debug("Constraint violation request: uri={}, message={}", request.getRequestURI(), ex.getMessage());
         return jsonError(
                 HttpStatus.BAD_REQUEST,
-                ex.getMessage(),
+                "Invalid path",
                 request.getRequestURI(),
                 List.of());
     }
@@ -95,7 +95,7 @@ public class GlobalExceptionHandler {
         log.error("Storage exception: uri={}, message={}", request.getRequestURI(), ex.getMessage());
         return jsonError(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                String.format("Storage error + %s", ex),
+                "Storage error",
                 request.getRequestURI(),
                 List.of());
     }
