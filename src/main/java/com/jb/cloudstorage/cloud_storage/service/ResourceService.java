@@ -12,13 +12,13 @@ import com.jb.cloudstorage.cloud_storage.repository.UserRepository;
 import com.jb.cloudstorage.cloud_storage.util.FileUtils;
 import io.minio.messages.Item;
 import org.apache.coyote.BadRequestException;
-import org.flywaydb.core.internal.util.StringUtils;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
@@ -78,6 +78,9 @@ public class ResourceService {
             String filename = object.getOriginalFilename();
             if (!StringUtils.hasText(filename)) {
                 throw new BadRequestException("File name is missing");
+            }
+            if (!FileUtils.isSafeName(filename)) {
+                throw new BadRequestException("Invalid filename");
             }
             String objectPath = FileUtils.joinPath(folderPath, filename);
             if (fileStorageService.objectExists(userId, objectPath)) {

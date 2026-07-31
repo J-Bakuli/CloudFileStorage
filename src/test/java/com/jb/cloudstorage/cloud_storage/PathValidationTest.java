@@ -63,4 +63,38 @@ public class PathValidationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", containsString("Invalid path")));
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "../secret",
+            "a//b",
+            "folder\\x"
+    })
+    void testCreateDirectory_invalid_path(String path) throws Exception {
+        basicSignUp();
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", path)
+                                .session(session))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Invalid path"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "../secret.txt",
+            "a//b.txt",
+            "folder\\x.txt"
+    })
+    void testMove_invalid_path(String path) throws Exception {
+        basicSignUp();
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "secret.txt")
+                                .param("to", path)
+                                .session(session))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Invalid path")));
+    }
 }

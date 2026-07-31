@@ -34,6 +34,18 @@ public class FileUtils {
         return fullPath.endsWith("/") ? ResourceType.DIRECTORY : ResourceType.FILE;
     }
 
+    public static boolean isSafeName(String s) {
+        if (s == null) {
+            return false;
+        }
+        if (s.isBlank()) {
+            return false;
+        }
+        return !(s.contains("..")
+                || s.contains("\\")
+                || s.contains("/"));
+    }
+
     public static String getRelativePath(Long userId, String objectName) {
         return objectName.substring(userRootPrefix(userId).length());
     }
