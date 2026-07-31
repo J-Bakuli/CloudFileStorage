@@ -50,6 +50,33 @@ public class AuthApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
+    void testSignUp_signIn_trimUserName() throws Exception {
+        String userName = "AlexLivitskiy";
+        String userNameToTrim = " AlexLivitskiy ";
+        SignUpRequest request0 = new SignUpRequest(userName, BASIC_PASSWORD);
+        mockMvc.perform(
+                        post("/api/auth/sign-up")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request0)))
+                .andExpect(status().isCreated());
+
+        SignUpRequest request1 = new SignUpRequest(userNameToTrim, BASIC_PASSWORD);
+        mockMvc.perform(
+                        post("/api/auth/sign-up")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request1)))
+                .andExpect(status().isConflict());
+
+        SignInRequest request2 = new SignInRequest(userNameToTrim, BASIC_PASSWORD);
+        mockMvc.perform(
+                        post("/api/auth/sign-in")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request2)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username", is(userName)));
+    }
+
+    @Test
     void testSignUp_success() throws Exception {
         SignUpRequest request = new SignUpRequest(BASIC_USERNAME, BASIC_PASSWORD);
         mockMvc.perform(

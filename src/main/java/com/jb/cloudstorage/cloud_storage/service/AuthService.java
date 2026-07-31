@@ -42,7 +42,7 @@ public class AuthService {
 
     @Transactional
     public UserResponse register(SignUpRequest signUpRequest, HttpServletRequest request, HttpServletResponse response) {
-        String username = signUpRequest.username();
+        String username = signUpRequest.username().trim();
         UserEntity userEntity = userRepository.findByUsername(username);
 
         if (userEntity != null) {
@@ -54,7 +54,7 @@ public class AuthService {
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        signUpRequest.username(),
+                        username,
                         signUpRequest.password()
                 )
         );
@@ -66,7 +66,7 @@ public class AuthService {
     }
 
     public UserResponse login(SignInRequest signInRequest, HttpServletRequest request, HttpServletResponse response) {
-        String username = signInRequest.username();
+        String username = signInRequest.username().trim();
         UserEntity userEntity = userRepository.findByUsername(username);
 
         if (userEntity == null || !passwordEncoder.matches(signInRequest.password(), userEntity.getPassword())) {
@@ -76,7 +76,7 @@ public class AuthService {
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        signInRequest.username(),
+                        username,
                         signInRequest.password()
                 )
         );
