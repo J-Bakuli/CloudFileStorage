@@ -5,6 +5,8 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class FileUtils {
+    private static final String FORBIDDEN_SPECIAL_CHARS = ":*?\"<>|";
+
     public record PathParts(String parentPath, String name, ResourceType type) {
     }
 
@@ -41,9 +43,21 @@ public class FileUtils {
         if (s.isBlank()) {
             return false;
         }
+        if (checkIfContainsForbiddenChars(s)) {
+            return false;
+        }
         return !(s.contains("..")
                 || s.contains("\\")
                 || s.contains("/"));
+    }
+
+    public static boolean checkIfContainsForbiddenChars(String input) {
+        for (int i = 0; i < FORBIDDEN_SPECIAL_CHARS.length(); i++) {
+            if (input.indexOf(FORBIDDEN_SPECIAL_CHARS.charAt(i)) >= 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static String getRelativePath(Long userId, String objectName) {

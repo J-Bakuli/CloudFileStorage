@@ -12,6 +12,9 @@ public class SafePathValidator implements ConstraintValidator<SafePath, String> 
         if (value.isBlank()) {
             return true;
         }
+        if (FileUtils.checkIfContainsForbiddenChars(value)) {
+            return false;
+        }
         return !(value.contains("..")
                 || value.contains("\\")
                 || value.contains("//")

@@ -5,9 +5,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -16,7 +14,14 @@ public class ResourceNameValidationTest extends BaseApiIntegrationTest {
     @ValueSource(strings = {
             "../secret.txt",
             "a/b.txt",
-            "folder\\x.txt"
+            "folder\\x.txt",
+            "file:name.txt",
+            "file*name.txt",
+            "file?name.txt",
+            "file\"name.txt",
+            "file<name.txt",
+            "file>name.txt",
+            "file|name.txt"
     })
     void testUploadResource_invalid_fileName(String fileName) throws Exception {
         basicSignUp();

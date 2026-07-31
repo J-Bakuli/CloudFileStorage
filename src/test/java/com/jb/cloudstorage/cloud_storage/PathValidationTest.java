@@ -16,7 +16,10 @@ public class PathValidationTest extends BaseApiIntegrationTest {
             "../user-1-files/main.txt",
             "folder\\main.txt",
             "folder//main.txt",
-            "/main.txt"
+            "/main.txt",
+            "folder:name/",
+            "a*b.txt",
+            "x|y.txt"
     })
     void testGetResource_invalidPaths(String path) throws Exception {
         basicSignUp();
@@ -68,7 +71,10 @@ public class PathValidationTest extends BaseApiIntegrationTest {
     @ValueSource(strings = {
             "../secret",
             "a//b",
-            "folder\\x"
+            "folder\\x",
+            "folder:name/",
+            "a*b.txt",
+            "x|y.txt"
     })
     void testCreateDirectory_invalid_path(String path) throws Exception {
         basicSignUp();
@@ -85,7 +91,10 @@ public class PathValidationTest extends BaseApiIntegrationTest {
     @ValueSource(strings = {
             "../secret.txt",
             "a//b.txt",
-            "folder\\x.txt"
+            "folder\\x.txt",
+            "folder:name/",
+            "a*b.txt",
+            "x|y.txt"
     })
     void testMove_invalid_path(String path) throws Exception {
         basicSignUp();
