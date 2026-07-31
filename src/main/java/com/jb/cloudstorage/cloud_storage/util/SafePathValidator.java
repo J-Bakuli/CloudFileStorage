@@ -12,7 +12,7 @@ public class SafePathValidator implements ConstraintValidator<SafePath, String> 
         if (value.isBlank()) {
             return true;
         }
-        if (FileUtils.checkIfContainsForbiddenChars(value)) {
+        if (ResourceNameValidator.containsForbiddenChars(value)) {
             return false;
         }
         return !(value.contains("..")

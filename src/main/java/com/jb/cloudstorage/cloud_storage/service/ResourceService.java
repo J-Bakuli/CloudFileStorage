@@ -10,6 +10,7 @@ import com.jb.cloudstorage.cloud_storage.model.ResourceType;
 import com.jb.cloudstorage.cloud_storage.model.UserEntity;
 import com.jb.cloudstorage.cloud_storage.repository.UserRepository;
 import com.jb.cloudstorage.cloud_storage.util.FileUtils;
+import com.jb.cloudstorage.cloud_storage.util.ResourceNameValidator;
 import io.minio.messages.Item;
 import org.apache.coyote.BadRequestException;
 import org.springframework.core.io.InputStreamResource;
@@ -79,7 +80,7 @@ public class ResourceService {
             if (!StringUtils.hasText(filename)) {
                 throw new BadRequestException("File name is missing");
             }
-            if (!FileUtils.isSafeName(filename)) {
+            if (!ResourceNameValidator.isSafeName(filename)) {
                 throw new BadRequestException("Invalid filename");
             }
             String objectPath = FileUtils.joinPath(folderPath, filename);
