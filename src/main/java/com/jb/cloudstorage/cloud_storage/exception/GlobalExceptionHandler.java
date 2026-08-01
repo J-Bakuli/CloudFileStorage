@@ -122,24 +122,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(ErrorResponseException.class)
-    public ResponseEntity<ApiErrorResponse> handleErrorResponseException(ErrorResponseException ex, HttpServletRequest request) {
-        if ("NoSuchKey".equals(ex.errorResponse().code())) {
-            log.debug("MinIO object not found: uri={}", request.getRequestURI());
-            return jsonError(
-                    HttpStatus.NOT_FOUND,
-                    "Resource not found",
-                    request.getRequestURI(),
-                    List.of());
-        }
-        log.error("MinIO error: uri={}, code={}", request.getRequestURI(), ex.errorResponse().code(), ex);
-        return jsonError(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "Storage error",
-                request.getRequestURI(),
-                List.of());
-    }
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnexpectedException(Exception ex, HttpServletRequest request) {
         log.error("Unexpected error: uri={}", request.getRequestURI(), ex);
