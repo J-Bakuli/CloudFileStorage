@@ -45,8 +45,7 @@ public class FileStorageService {
         this.minioClient = minioClient;
     }
 
-
-    public void uploadFile(Long userId, String relativePath, MultipartFile file) throws StorageException {
+    public void uploadFile(Long userId, String relativePath, MultipartFile file) {
         log.debug("Uploading file for userId={}, relativePath={}, filename={}, size={}",
                 userId, relativePath, file.getOriginalFilename(), file.getSize());
         ensureBucketExists();
@@ -65,7 +64,7 @@ public class FileStorageService {
         }
     }
 
-    public void createDirectory(Long userId, String folderPath) throws StorageException {
+    public void createDirectory(Long userId, String folderPath) {
         log.debug("Creating directory for userId={}, folderPath={}", userId, folderPath);
         ensureBucketExists();
         try {
@@ -81,7 +80,7 @@ public class FileStorageService {
         }
     }
 
-    public boolean objectExists(Long userId, String directoryPath) throws Exception {
+    public boolean objectExists(Long userId, String directoryPath) {
         log.debug("Checking object existence for userId={}, path={}", userId, directoryPath);
         ensureBucketExists();
         try {
@@ -100,11 +99,13 @@ public class FileStorageService {
             }
             log.warn("MinIO error while checking object for userId={}, path={}, code={}",
                     userId, directoryPath, e.errorResponse().code());
-            throw e;
+            throw new StorageException("Storage error", e);
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new StorageException("Storage error", e);
         }
     }
 
-    public Long getObjectSize(Long userId, String fullPath) throws StorageException {
+    public Long getObjectSize(Long userId, String fullPath) {
         log.debug("Getting object size for userId={}, path={}", userId, fullPath);
         ensureBucketExists();
         String objectName = fullObjectName(userId, fullPath);
@@ -120,7 +121,7 @@ public class FileStorageService {
         }
     }
 
-    public void delete(Long userId, String resourcePath) throws StorageException {
+    public void delete(Long userId, String resourcePath) {
         ensureBucketExists();
         ResourceType type = FileUtils.getResourceType(resourcePath);
         log.debug("Deleting resource for userId={}, path={}, type={}", userId, resourcePath, type);
@@ -139,7 +140,7 @@ public class FileStorageService {
         }
     }
 
-    public InputStreamResource download(Long userId, String resourcePath) throws StorageException {
+    public InputStreamResource download(Long userId, String resourcePath) {
         ensureBucketExists();
         String objectName = fullObjectName(userId, resourcePath);
         log.debug("Downloading file for userId={}, objectName={}", userId, objectName);
@@ -153,7 +154,7 @@ public class FileStorageService {
         }
     }
 
-    public InputStreamResource downloadDirectoryAsZip(Long userId, String resourcePath) throws StorageException {
+    public InputStreamResource downloadDirectoryAsZip(Long userId, String resourcePath) {
         ensureBucketExists();
         log.debug("Downloading directory as zip for userId={}, path={}", userId, resourcePath);
 
@@ -192,7 +193,7 @@ public class FileStorageService {
         return new InputStreamResource(new ByteArrayInputStream(outputStream.toByteArray()));
     }
 
-    public void moveFile(Long userId, String fromPath, String toPath) throws StorageException {
+    public void moveFile(Long userId, String fromPath, String toPath) {
         log.debug("Move file for userId={}, fromPath={}, toPath={}", userId, fromPath, toPath);
         ensureBucketExists();
         copyObject(userId, fromPath, toPath);
@@ -200,7 +201,7 @@ public class FileStorageService {
         log.info("Moved file for userId={}, fromPath={}, toPath={}", userId, fromPath, toPath);
     }
 
-    public void moveDirectory(Long userId, String fromPath, String toPath) throws StorageException {
+    public void moveDirectory(Long userId, String fromPath, String toPath) {
         log.debug("Move directory for userId={}, fromPath={}, toPath={}", userId, fromPath, toPath);
         ensureBucketExists();
         copyObjectRecursively(userId, fromPath, toPath);
@@ -208,14 +209,14 @@ public class FileStorageService {
         log.info("Moved directory for userId={}, fromPath={}, toPath={}", userId, fromPath, toPath);
     }
 
-    public List<Item> search(Long userId, String query) throws StorageException {
+    public List<Item> search(Long userId, String query) {
         log.debug("Search files for userId={}, query={}", userId, query);
         List<Item> items = listObjects(userId, "", true);
         log.info("Search is completed for userId={}, query={}", userId, query);
         return filter(userId, query, items);
     }
 
-    public List<Item> listObjects(Long userId, String directoryPath, boolean isRecursive) throws StorageException {
+    public List<Item> listObjects(Long userId, String directoryPath, boolean isRecursive) {
         log.debug("Listing objects for userId={}, directoryPath={}", userId, directoryPath);
         try {
             ensureBucketExists();
@@ -242,7 +243,7 @@ public class FileStorageService {
         }
     }
 
-    private void ensureBucketExists() throws StorageException {
+    private void ensureBucketExists() {
         try {
             boolean exists = minioClient.bucketExists(
                     BucketExistsArgs.builder()
@@ -278,7 +279,7 @@ public class FileStorageService {
                 .toList();
     }
 
-    private void copyObject(Long userId, String fromPath, String toPath) throws StorageException {
+    private void copyObject(Long userId, String fromPath, String toPath) {
         try {
             String fromObjectName = fullObjectName(userId, fromPath);
             String toObjectName = fullObjectName(userId, toPath);
@@ -296,7 +297,7 @@ public class FileStorageService {
         }
     }
 
-    private void copyObjectRecursively(Long userId, String fromPath, String toPath) throws StorageException {
+    private void copyObjectRecursively(Long userId, String fromPath, String toPath) {
         String fromPrefix = buildUserObjectPrefix(userId, fromPath);
         String toPrefix = buildUserObjectPrefix(userId, toPath);
 
@@ -332,7 +333,7 @@ public class FileStorageService {
         }
     }
 
-    private void deleteRecursively(Long userId, String resourcePath) throws StorageException {
+    private void deleteRecursively(Long userId, String resourcePath) {
         String normalizedPath = FileUtils.normalizeParentPath(resourcePath);
         String prefix = buildUserObjectPrefix(userId, normalizedPath);
         log.debug("Deleting directory recursively for userId={}, path={}, prefix={}",

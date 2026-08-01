@@ -23,7 +23,6 @@ import java.util.List;
 @Tag(name = "Directory")
 public class DirectoryController {
     private final ResourceService resourceService;
-
     public DirectoryController(ResourceService resourceService) {
         this.resourceService = resourceService;
     }
@@ -36,7 +35,7 @@ public class DirectoryController {
     @GetMapping
     public List<ResourceResponse> getDirectory(
             @RequestParam("path") @SafePath String path
-    ) throws Exception {
+    ) {
         return resourceService.getDirectory(path);
     }
 
@@ -49,7 +48,7 @@ public class DirectoryController {
     @ResponseStatus(HttpStatus.CREATED)
     public ResourceResponse createDirectory(
             @RequestParam("path") @SafePath String path
-    ) throws Exception {
+    ) {
         return resourceService.createDirectory(path);
     }
 }

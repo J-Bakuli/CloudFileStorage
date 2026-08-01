@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Auth")
 public class AuthController {
     private final AuthService authService;
-
     public AuthController(AuthService authService) {
         this.authService = authService;
     }

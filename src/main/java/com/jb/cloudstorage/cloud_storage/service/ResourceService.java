@@ -4,15 +4,14 @@ import com.jb.cloudstorage.cloud_storage.dto.ResourceResponse;
 import com.jb.cloudstorage.cloud_storage.exception.DirectoryAlreadyExistsException;
 import com.jb.cloudstorage.cloud_storage.exception.FileAlreadyExistsException;
 import com.jb.cloudstorage.cloud_storage.exception.InvalidCredentialsException;
+import com.jb.cloudstorage.cloud_storage.exception.InvalidRequestException;
 import com.jb.cloudstorage.cloud_storage.exception.ResourceNotFoundException;
-import com.jb.cloudstorage.cloud_storage.exception.StorageException;
 import com.jb.cloudstorage.cloud_storage.model.ResourceType;
 import com.jb.cloudstorage.cloud_storage.model.UserEntity;
 import com.jb.cloudstorage.cloud_storage.repository.UserRepository;
 import com.jb.cloudstorage.cloud_storage.util.FileUtils;
 import com.jb.cloudstorage.cloud_storage.util.ResourceNameValidator;
 import io.minio.messages.Item;
-import org.apache.coyote.BadRequestException;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -36,7 +35,7 @@ public class ResourceService {
         this.fileStorageService = fileStorageService;
     }
 
-    public ResourceResponse get(String fullPath) throws Exception {
+    public ResourceResponse get(String fullPath) {
         Long userId = getCurrentUserId();
 
         FileUtils.PathParts pathParts = FileUtils.splitPath(fullPath);
@@ -54,7 +53,7 @@ public class ResourceService {
                 pathParts.type());
     }
 
-    public List<ResourceResponse> getDirectory(String fullPath) throws Exception {
+    public List<ResourceResponse> getDirectory(String fullPath) {
         Long userId = getCurrentUserId();
 
         String normalizedPath = FileUtils.normalizeParentPath(fullPath);
@@ -67,21 +66,21 @@ public class ResourceService {
         return buildResponse(userId, objects);
     }
 
-    public List<ResourceResponse> upload(String folderPath, List<MultipartFile> objects) throws Exception { //Todo remove throwing Exception later
+    public List<ResourceResponse> upload(String folderPath, List<MultipartFile> objects) {
         Long userId = getCurrentUserId();
         List<ResourceResponse> response = new ArrayList<>();
         String normalizedPath = FileUtils.normalizeParentPath(folderPath);
 
         for (MultipartFile object : objects) {
             if (object == null || object.isEmpty()) {
-                throw new BadRequestException("File is null or empty");
+                throw new InvalidRequestException("File is null or empty");
             }
             String filename = object.getOriginalFilename();
             if (!StringUtils.hasText(filename)) {
-                throw new BadRequestException("File name is missing");
+                throw new InvalidRequestException("File name is missing");
             }
             if (!ResourceNameValidator.isSafeName(filename)) {
-                throw new BadRequestException("Invalid filename");
+                throw new InvalidRequestException("Invalid filename");
             }
             String objectPath = FileUtils.joinPath(folderPath, filename);
             if (fileStorageService.objectExists(userId, objectPath)) {
@@ -95,7 +94,7 @@ public class ResourceService {
         return response;
     }
 
-    public ResourceResponse createDirectory(String directoryPath) throws Exception {
+    public ResourceResponse createDirectory(String directoryPath) {
         Long userId = getCurrentUserId();
         String normalizedPath = FileUtils.normalizeParentPath(directoryPath);
 
@@ -122,7 +121,7 @@ public class ResourceService {
                 ResourceType.DIRECTORY);
     }
 
-    public void delete(String resourcePath) throws Exception {
+    public void delete(String resourcePath) {
         Long userId = getCurrentUserId();
         ResourceType type = FileUtils.getResourceType(resourcePath);
 
@@ -133,7 +132,7 @@ public class ResourceService {
         fileStorageService.delete(userId, resourcePath);
     }
 
-    public ResponseEntity<InputStreamResource> download(String resourcePath) throws Exception {
+    public ResponseEntity<InputStreamResource> download(String resourcePath) {
         Long userId = getCurrentUserId();
         ResourceType type = FileUtils.getResourceType(resourcePath);
 
@@ -155,7 +154,7 @@ public class ResourceService {
                 .body(fileStorageService.download(userId, resourcePath));
     }
 
-    public ResourceResponse move(String fromPath, String toPath) throws Exception {
+    public ResourceResponse move(String fromPath, String toPath) {
         Long userId = getCurrentUserId();
         ResourceType fromType = FileUtils.getResourceType(fromPath);
         ResourceType toType = FileUtils.getResourceType(toPath);
@@ -194,9 +193,9 @@ public class ResourceService {
         );
     }
 
-    public List<ResourceResponse> search(String query) throws StorageException, BadRequestException {
+    public List<ResourceResponse> search(String query) {
         if (query.trim().isBlank()) {
-            throw new BadRequestException("Query is empty");
+            throw new InvalidRequestException("Query is empty");
         }
         Long userId = getCurrentUserId();
         List<Item> items = fileStorageService.search(userId, query);
@@ -219,13 +218,13 @@ public class ResourceService {
         }
     }
 
-    private boolean resourceExists(Long userId, String resourcePath, ResourceType type) throws Exception {
+    private boolean resourceExists(Long userId, String resourcePath, ResourceType type) {
         return type == ResourceType.FILE
                 ? fileStorageService.objectExists(userId, resourcePath)
                 : directoryExists(userId, resourcePath);
     }
 
-    private boolean directoryExists(Long userId, String directoryPath) throws Exception {
+    private boolean directoryExists(Long userId, String directoryPath) {
         String path = FileUtils.normalizeParentPath(directoryPath);
         return fileStorageService.objectExists(userId, path)
                 || !fileStorageService.listObjects(userId, path, false).isEmpty();
@@ -240,7 +239,7 @@ public class ResourceService {
         return user.getId();
     }
 
-    private boolean parentExists(Long userId, String parentPath) throws Exception {
+    private boolean parentExists(Long userId, String parentPath) {
         if (parentPath.isBlank()) {
             return true;
         }

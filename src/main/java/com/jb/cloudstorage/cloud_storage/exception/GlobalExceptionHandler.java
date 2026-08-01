@@ -80,9 +80,9 @@ public class GlobalExceptionHandler {
                 List.of());
     }
 
-    @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ApiErrorResponse> handleBadRequestException(BadRequestException ex, HttpServletRequest request) {
-        log.debug("Bad request: uri={}, message={}", request.getRequestURI(), ex.getMessage());
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidRequestException(InvalidRequestException ex, HttpServletRequest request) {
+        log.debug("Invalid request: uri={}, message={}", request.getRequestURI(), ex.getMessage());
         return jsonError(
                 HttpStatus.BAD_REQUEST,
                 ex.getMessage(),

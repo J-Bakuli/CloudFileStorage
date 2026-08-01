@@ -28,7 +28,6 @@ import java.util.List;
 @Tag(name = "Resource")
 public class ResourceController {
     private final ResourceService resourceService;
-
     public ResourceController(ResourceService resourceService) {
         this.resourceService = resourceService;
     }
@@ -42,7 +41,7 @@ public class ResourceController {
     public List<ResourceResponse> upload(
             @RequestParam("path") @SafePath String path,
             @RequestParam("object") List<MultipartFile> objects
-    ) throws Exception {
+    ) {
         return resourceService.upload(path, objects);
     }
 
@@ -54,7 +53,7 @@ public class ResourceController {
     @GetMapping
     public ResourceResponse get(
             @RequestParam("path") @SafePath String path
-    ) throws Exception {
+    ) {
         return resourceService.get(path);
     }
 
@@ -67,7 +66,7 @@ public class ResourceController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(
             @RequestParam("path") @SafePath String path
-    ) throws Exception {
+    ) {
         resourceService.delete(path);
     }
 
@@ -79,7 +78,7 @@ public class ResourceController {
     @GetMapping("/download")
     public ResponseEntity<InputStreamResource> download(
             @RequestParam("path") @SafePath String path
-    ) throws Exception {
+    ) {
         return resourceService.download(path);
     }
 
@@ -92,7 +91,7 @@ public class ResourceController {
     @PostMapping("/move")
     public ResourceResponse move(
             @RequestParam("from") @SafePath String fromPath, @RequestParam("to") @SafePath String toPath
-    ) throws Exception {
+    ) {
         return resourceService.move(fromPath, toPath);
     }
 
@@ -103,7 +102,7 @@ public class ResourceController {
     @GetMapping("/search")
     public List<ResourceResponse> search(
             @RequestParam("query") String query
-    ) throws Exception {
+    ) {
         return resourceService.search(query);
     }
 }
