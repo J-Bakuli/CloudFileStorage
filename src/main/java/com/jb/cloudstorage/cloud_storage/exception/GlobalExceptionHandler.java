@@ -2,7 +2,6 @@ package com.jb.cloudstorage.cloud_storage.exception;
 
 import com.jb.cloudstorage.cloud_storage.dto.ApiErrorResponse;
 import com.jb.cloudstorage.cloud_storage.dto.ApiFieldError;
-import io.minio.errors.ErrorResponseException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -49,19 +48,9 @@ public class GlobalExceptionHandler {
                 List.of());
     }
 
-    @ExceptionHandler(DirectoryAlreadyExistsException.class)
-    public ResponseEntity<ApiErrorResponse> handleDirectoryAlreadyExistsException(DirectoryAlreadyExistsException ex, HttpServletRequest request) {
-        log.debug("Directory conflict: uri={}, message={}", request.getRequestURI(), ex.getMessage());
-        return jsonError(
-                HttpStatus.CONFLICT,
-                ex.getMessage(),
-                request.getRequestURI(),
-                List.of());
-    }
-
-    @ExceptionHandler(FileAlreadyExistsException.class)
-    public ResponseEntity<ApiErrorResponse> handleFileAlreadyExistsException(FileAlreadyExistsException ex, HttpServletRequest request) {
-        log.debug("File conflict: uri={}, message={}", request.getRequestURI(), ex.getMessage());
+    @ExceptionHandler(ResourceAlreadyExistsException.class)
+    public ResponseEntity<ApiErrorResponse> handleResourceAlreadyExistsException(ResourceAlreadyExistsException ex, HttpServletRequest request) {
+        log.debug("Resource conflict: uri={}, message={}", request.getRequestURI(), ex.getMessage());
         return jsonError(
                 HttpStatus.CONFLICT,
                 ex.getMessage(),

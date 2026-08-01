@@ -1,8 +1,7 @@
 package com.jb.cloudstorage.cloud_storage.service;
 
 import com.jb.cloudstorage.cloud_storage.dto.ResourceResponse;
-import com.jb.cloudstorage.cloud_storage.exception.DirectoryAlreadyExistsException;
-import com.jb.cloudstorage.cloud_storage.exception.FileAlreadyExistsException;
+import com.jb.cloudstorage.cloud_storage.exception.ResourceAlreadyExistsException;
 import com.jb.cloudstorage.cloud_storage.exception.InvalidCredentialsException;
 import com.jb.cloudstorage.cloud_storage.exception.InvalidRequestException;
 import com.jb.cloudstorage.cloud_storage.exception.ResourceNotFoundException;
@@ -85,12 +84,12 @@ public class ResourceService {
             }
             String objectPath = FileUtils.joinPath(folderPath, filename);
             if (fileStorageService.objectExists(userId, objectPath)) {
-                throw new FileAlreadyExistsException(String.format("File already exists, path=%s", objectPath));
+                throw new ResourceAlreadyExistsException(String.format("File already exists, path=%s", objectPath));
             }
             ensureNoCaseInsensitiveConflict(userId, normalizedPath, filename, ResourceType.FILE);
             String key = filename.toLowerCase(Locale.ROOT);
             if (uploadedNames.contains(key)) {
-                throw new FileAlreadyExistsException(String.format("File already exists, path=%s", objectPath));
+                throw new ResourceAlreadyExistsException(String.format("File already exists, path=%s", objectPath));
             }
             fileStorageService.uploadFile(userId, folderPath, object);
             uploadedNames.add(key);
@@ -108,7 +107,7 @@ public class ResourceService {
         String requestedName = parts.name();
 
         if (fileStorageService.objectExists(userId, normalizedPath)) {
-            throw new DirectoryAlreadyExistsException(String.format("Directory already exists, path=%s", directoryPath));
+            throw new ResourceAlreadyExistsException(String.format("Directory already exists, path=%s", directoryPath));
         }
 
         if (!parentExists(userId, parentPath)) {
@@ -175,9 +174,9 @@ public class ResourceService {
 
         if (resourceExists(userId, toPath, toType)) {
             if (toType == ResourceType.DIRECTORY) {
-                throw new DirectoryAlreadyExistsException(String.format("Directory already exists, path=%s", toPath));
+                throw new ResourceAlreadyExistsException(String.format("Directory already exists, path=%s", toPath));
             }
-            throw new FileAlreadyExistsException(String.format("File already exists, path=%s", toPath));
+            throw new ResourceAlreadyExistsException(String.format("File already exists, path=%s", toPath));
         }
 
         ensureNoCaseInsensitiveConflict(userId, parentPath, requestedName, toType);
@@ -216,9 +215,9 @@ public class ResourceService {
 
             if (pathParts.type() == type && pathParts.name().equalsIgnoreCase(resourceName.trim())) {
                 if (type == ResourceType.DIRECTORY) {
-                    throw new DirectoryAlreadyExistsException(String.format("Directory already exists, path=%s", resourceName));
+                    throw new ResourceAlreadyExistsException(String.format("Directory already exists, path=%s", resourceName));
                 }
-                throw new FileAlreadyExistsException(String.format("File already exists, path=%s", resourceName));
+                throw new ResourceAlreadyExistsException(String.format("File already exists, path=%s", resourceName));
             }
         }
     }
