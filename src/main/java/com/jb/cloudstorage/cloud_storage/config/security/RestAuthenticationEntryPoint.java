@@ -2,7 +2,6 @@ package com.jb.cloudstorage.cloud_storage.config.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jb.cloudstorage.cloud_storage.dto.ApiErrorResponse;
-import com.jb.cloudstorage.cloud_storage.dto.ApiFieldError;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
