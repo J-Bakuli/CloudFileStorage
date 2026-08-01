@@ -6,6 +6,7 @@ import com.jb.cloudstorage.cloud_storage.util.SafePath;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,13 +20,11 @@ import java.util.List;
 
 @Validated
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/directory")
 @Tag(name = "Directory")
 public class DirectoryController {
     private final ResourceService resourceService;
-    public DirectoryController(ResourceService resourceService) {
-        this.resourceService = resourceService;
-    }
 
     @Operation(summary = "Get directory content")
     @ApiResponse(responseCode = "200", description = "Directory content returned")

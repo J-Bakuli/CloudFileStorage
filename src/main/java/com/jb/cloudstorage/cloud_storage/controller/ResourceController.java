@@ -6,6 +6,7 @@ import com.jb.cloudstorage.cloud_storage.util.SafePath;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -24,13 +25,11 @@ import java.util.List;
 
 @Validated
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/resource")
 @Tag(name = "Resource")
 public class ResourceController {
     private final ResourceService resourceService;
-    public ResourceController(ResourceService resourceService) {
-        this.resourceService = resourceService;
-    }
 
     @Operation(summary = "Upload object into the app")
     @ApiResponse(responseCode = "400", description = "Invalid request body")

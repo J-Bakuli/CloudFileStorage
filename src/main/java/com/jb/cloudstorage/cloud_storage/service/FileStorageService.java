@@ -18,6 +18,7 @@ import io.minio.StatObjectArgs;
 import io.minio.errors.ErrorResponseException;
 import io.minio.errors.MinioException;
 import io.minio.messages.Item;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
@@ -35,15 +36,11 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 @Slf4j
+@RequiredArgsConstructor
 @Service
 public class FileStorageService {
     private final MinioProperties minioProperties;
     private final MinioClient minioClient;
-
-    public FileStorageService(MinioProperties minioProperties, MinioClient minioClient) {
-        this.minioProperties = minioProperties;
-        this.minioClient = minioClient;
-    }
 
     public void uploadFile(Long userId, String relativePath, MultipartFile file) {
         log.debug("Uploading file for userId={}, relativePath={}, filename={}, size={}",

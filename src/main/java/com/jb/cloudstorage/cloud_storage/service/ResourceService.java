@@ -12,6 +12,7 @@ import com.jb.cloudstorage.cloud_storage.repository.UserRepository;
 import com.jb.cloudstorage.cloud_storage.util.FileUtils;
 import com.jb.cloudstorage.cloud_storage.util.ResourceNameValidator;
 import io.minio.messages.Item;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -28,15 +29,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+@RequiredArgsConstructor
 @Service
 public class ResourceService {
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
-
-    public ResourceService(UserRepository userRepository, FileStorageService fileStorageService) {
-        this.userRepository = userRepository;
-        this.fileStorageService = fileStorageService;
-    }
 
     public ResourceResponse get(String fullPath) {
         Long userId = getCurrentUserId();
