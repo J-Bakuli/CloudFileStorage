@@ -23,7 +23,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 @Service
 public class ResourceService {
@@ -70,6 +73,7 @@ public class ResourceService {
         Long userId = getCurrentUserId();
         List<ResourceResponse> response = new ArrayList<>();
         String normalizedPath = FileUtils.normalizeParentPath(folderPath);
+        Set<String> uploadedNames = new HashSet<>();
 
         for (MultipartFile object : objects) {
             if (object == null || object.isEmpty()) {
@@ -87,8 +91,12 @@ public class ResourceService {
                 throw new FileAlreadyExistsException(String.format("File already exists, path=%s", objectPath));
             }
             ensureNoCaseInsensitiveConflict(userId, normalizedPath, filename, ResourceType.FILE);
-
+            String key = filename.toLowerCase(Locale.ROOT);
+            if (uploadedNames.contains(key)) {
+                throw new FileAlreadyExistsException(String.format("File already exists, path=%s", objectPath));
+            }
             fileStorageService.uploadFile(userId, folderPath, object);
+            uploadedNames.add(key);
             response = List.of(buildResponse(folderPath, object));
         }
         return response;

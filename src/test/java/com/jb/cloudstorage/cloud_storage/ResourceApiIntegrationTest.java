@@ -142,6 +142,43 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
+    void testUploadFile_conflict_caseInsensitiveName_sameRequest() throws Exception {
+        basicSignUp();
+        MockMultipartFile file1 = new MockMultipartFile(
+                "object",
+                "test.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                "hello".getBytes()
+        );
+        MockMultipartFile file2 = new MockMultipartFile(
+                "object",
+                "TEST.TXT",
+                MediaType.TEXT_PLAIN_VALUE,
+                "world".getBytes()
+        );
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file1)
+                                .file(file2)
+                                .param("path", "")
+                                .session(session))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message", containsString("already exists")));
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", "test.txt")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("test.txt"));
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", "TEST.TXT")
+                                .session(session))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", containsString("not found")));
+    }
+
+    @Test
     void testDeleteFile_unauthorized() throws Exception {
         mockMvc.perform(
                         delete("/api/resource")
