@@ -1,38 +1,33 @@
 package com.jb.cloudstorage.cloud_storage.service;
 
 import com.jb.cloudstorage.cloud_storage.dto.ResourceResponse;
-import com.jb.cloudstorage.cloud_storage.exception.ResourceAlreadyExistsException;
-import com.jb.cloudstorage.cloud_storage.exception.InvalidCredentialsException;
 import com.jb.cloudstorage.cloud_storage.exception.InvalidRequestException;
+import com.jb.cloudstorage.cloud_storage.exception.ResourceAlreadyExistsException;
 import com.jb.cloudstorage.cloud_storage.exception.ResourceNotFoundException;
 import com.jb.cloudstorage.cloud_storage.model.ResourceType;
-import com.jb.cloudstorage.cloud_storage.model.UserEntity;
 import com.jb.cloudstorage.cloud_storage.repository.UserRepository;
 import com.jb.cloudstorage.cloud_storage.util.FileUtils;
 import com.jb.cloudstorage.cloud_storage.util.ResourceNameValidator;
 import io.minio.messages.Item;
-import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-@RequiredArgsConstructor
 @Service
-public class ResourceService {
-    private final UserRepository userRepository;
-    private final FileStorageService fileStorageService;
+public class ResourceService extends ResourceSupport {
+    public ResourceService(UserRepository userRepository, FileStorageService fileStorageService) {
+        super(userRepository, fileStorageService);
+    }
 
     public ResourceResponse get(String fullPath) {
         Long userId = getCurrentUserId();
@@ -204,78 +199,5 @@ public class ResourceService {
         Long userId = getCurrentUserId();
         List<Item> items = fileStorageService.search(userId, query);
         return buildResponse(userId, items);
-    }
-
-    private void ensureNoCaseInsensitiveConflict(Long userId, String parentPath, String resourceName, ResourceType type) {
-        List<Item> items = fileStorageService.listObjects(userId, parentPath, false);
-        for (Item item : items) {
-            String objectName = item.objectName();
-            String relativePath = FileUtils.getRelativePath(userId, objectName);
-            FileUtils.PathParts pathParts = FileUtils.splitPath(relativePath);
-
-            if (pathParts.type() == type && pathParts.name().equalsIgnoreCase(resourceName.trim())) {
-                if (type == ResourceType.DIRECTORY) {
-                    throw new ResourceAlreadyExistsException(String.format("Directory already exists, path=%s", resourceName));
-                }
-                throw new ResourceAlreadyExistsException(String.format("File already exists, path=%s", resourceName));
-            }
-        }
-    }
-
-    private boolean resourceExists(Long userId, String resourcePath, ResourceType type) {
-        return type == ResourceType.FILE
-                ? fileStorageService.objectExists(userId, resourcePath)
-                : directoryExists(userId, resourcePath);
-    }
-
-    private boolean directoryExists(Long userId, String directoryPath) {
-        String path = FileUtils.normalizeParentPath(directoryPath);
-        return fileStorageService.objectExists(userId, path)
-                || !fileStorageService.listObjects(userId, path, false).isEmpty();
-    }
-
-    private Long getCurrentUserId() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        UserEntity user = userRepository.findByUsername(username);
-        if (user == null) {
-            throw new InvalidCredentialsException(String.format("User with username=%s is not found", username));
-        }
-        return user.getId();
-    }
-
-    private boolean parentExists(Long userId, String parentPath) {
-        if (parentPath.isBlank()) {
-            return true;
-        }
-
-        if (fileStorageService.objectExists(userId, parentPath)) {
-            return true;
-        }
-
-        return !fileStorageService.listObjects(userId, parentPath, false).isEmpty();
-    }
-
-    private ResourceResponse buildResponse(String folderPath, MultipartFile file) {
-        return new ResourceResponse(
-                FileUtils.normalizeParentPath(folderPath),
-                file.getOriginalFilename(),
-                file.getSize(),
-                ResourceType.FILE
-        );
-    }
-
-    private List<ResourceResponse> buildResponse(Long userId, List<Item> objects) {
-        return objects.stream().map(
-                        item -> {
-                            String objectName = item.objectName();
-                            String relativePath = FileUtils.getRelativePath(userId, objectName);
-                            FileUtils.PathParts parts = FileUtils.splitPath(relativePath);
-                            ResourceType type = FileUtils.getResourceType(relativePath);
-                            Long size = type == ResourceType.DIRECTORY ? null : item.size();
-                            return new ResourceResponse(parts.parentPath(), parts.name(), size, type);
-                        }
-                )
-                .sorted(Comparator.comparing(ResourceResponse::type))
-                .toList();
     }
 }
