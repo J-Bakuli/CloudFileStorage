@@ -263,20 +263,16 @@ public class FileStorageService {
     private void copyObjectRecursively(Long userId, String fromPath, String toPath) {
         String fromPrefix = buildUserObjectPrefix(userId, fromPath);
         String toPrefix = buildUserObjectPrefix(userId, toPath);
+        String normalizedFrom = FileUtils.normalizeParentPath(fromPath);
+        String normalizedTo = FileUtils.normalizeParentPath(toPath);
 
         log.debug("Copying objects recursively for userId={}, path={}, fromPrefix={}, toPrefix={}", userId, fromPath, fromPrefix, toPrefix);
         try {
-            Iterable<Result<Item>> results = minioClient.listObjects(
-                    ListObjectsArgs.builder()
-                            .bucket(minioProperties.bucket())
-                            .prefix(fromPrefix)
-                            .recursive(true)
-                            .build()
-            );
+            List<Item> items = listObjects(userId, fromPath, true);
 
             int copiedCount = 0;
-            for (Result<Item> result : results) {
-                String fromObjectName = result.get().objectName();
+            for (Item item : items) {
+                String fromObjectName = item.objectName();
                 String toObjectName = toPrefix + fromObjectName.substring(fromPrefix.length());
                 minioClient.copyObject(CopyObjectArgs.builder()
                         .bucket(minioProperties.bucket())
@@ -288,6 +284,10 @@ public class FileStorageService {
                         .build());
                 copiedCount++;
                 log.debug("Copied object: {}", toObjectName);
+            }
+            if (objectExists(userId, normalizedFrom)) {
+                copyObject(userId, normalizedFrom, normalizedTo);
+                copiedCount++;
             }
             log.info("Copied files in directory for userId={}, fromPath={}, toPath={},objectsCopied={}",
                     userId, fromPath, toPath, copiedCount);
@@ -302,17 +302,11 @@ public class FileStorageService {
         log.debug("Deleting directory recursively for userId={}, path={}, prefix={}",
                 userId, resourcePath, prefix);
         try {
-            Iterable<Result<Item>> results = minioClient.listObjects(
-                    ListObjectsArgs.builder()
-                            .bucket(minioProperties.bucket())
-                            .prefix(prefix)
-                            .recursive(true)
-                            .build()
-            );
+            List<Item> items = listObjects(userId, normalizedPath, true);
 
             int deletedCount = 0;
-            for (Result<Item> result : results) {
-                String objectName = result.get().objectName();
+            for (Item item : items) {
+                String objectName = item.objectName();
                 minioClient.removeObject(RemoveObjectArgs.builder()
                         .bucket(minioProperties.bucket())
                         .object(objectName)
@@ -321,11 +315,21 @@ public class FileStorageService {
                 deletedCount++;
                 log.debug("Removed object: {}", objectName);
             }
+            if (objectExists(userId, normalizedPath)) {
+                minioClient.removeObject(RemoveObjectArgs.builder()
+                        .bucket(minioProperties.bucket())
+                        .object(prefix)
+                        .build()
+                );
+                deletedCount++;
+                log.debug("Removed directory marker: {}", prefix);
+            }
             log.info("Deleted directory for userId={}, path={}, objectsRemoved={}", userId, resourcePath, deletedCount);
         } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
             throw new StorageException("Storage error", e);
         }
     }
+
 
     private String fullObjectName(Long userId, String objectRelativePath) {
         return FileUtils.userRootPrefix(userId) + objectRelativePath;
