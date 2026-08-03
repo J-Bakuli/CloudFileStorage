@@ -4,12 +4,10 @@ import com.jb.cloudstorage.cloud_storage.config.MinioProperties;
 import com.jb.cloudstorage.cloud_storage.exception.StorageException;
 import com.jb.cloudstorage.cloud_storage.model.ResourceType;
 import com.jb.cloudstorage.cloud_storage.util.FileUtils;
-import io.minio.BucketExistsArgs;
 import io.minio.CopyObjectArgs;
 import io.minio.CopySource;
 import io.minio.GetObjectArgs;
 import io.minio.ListObjectsArgs;
-import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
@@ -45,7 +43,6 @@ public class FileStorageService {
     public void uploadFile(Long userId, String relativePath, MultipartFile file) {
         log.debug("Uploading file for userId={}, relativePath={}, filename={}, size={}",
                 userId, relativePath, file.getOriginalFilename(), file.getSize());
-        ensureBucketExists();
         try {
             String objectPath = FileUtils.joinPath(relativePath, file.getOriginalFilename());
             String objectName = fullObjectName(userId, objectPath);
@@ -63,7 +60,6 @@ public class FileStorageService {
 
     public void createDirectory(Long userId, String folderPath) {
         log.debug("Creating directory for userId={}, folderPath={}", userId, folderPath);
-        ensureBucketExists();
         try {
             minioClient.putObject(PutObjectArgs.builder()
                     .bucket(minioProperties.bucket())
@@ -79,7 +75,6 @@ public class FileStorageService {
 
     public boolean objectExists(Long userId, String directoryPath) {
         log.debug("Checking object existence for userId={}, path={}", userId, directoryPath);
-        ensureBucketExists();
         try {
             minioClient.statObject(
                     StatObjectArgs.builder()
@@ -104,7 +99,6 @@ public class FileStorageService {
 
     public Long getObjectSize(Long userId, String fullPath) {
         log.debug("Getting object size for userId={}, path={}", userId, fullPath);
-        ensureBucketExists();
         String objectName = fullObjectName(userId, fullPath);
         try {
             return minioClient.statObject(
@@ -119,7 +113,6 @@ public class FileStorageService {
     }
 
     public void delete(Long userId, String resourcePath) {
-        ensureBucketExists();
         ResourceType type = FileUtils.getResourceType(resourcePath);
         log.debug("Deleting resource for userId={}, path={}, type={}", userId, resourcePath, type);
         try {
@@ -138,7 +131,6 @@ public class FileStorageService {
     }
 
     public InputStreamResource download(Long userId, String resourcePath) {
-        ensureBucketExists();
         String objectName = fullObjectName(userId, resourcePath);
         log.debug("Downloading file for userId={}, objectName={}", userId, objectName);
         try {
@@ -152,7 +144,6 @@ public class FileStorageService {
     }
 
     public InputStreamResource downloadDirectoryAsZip(Long userId, String resourcePath) {
-        ensureBucketExists();
         log.debug("Downloading directory as zip for userId={}, path={}", userId, resourcePath);
 
         List<Item> results = listObjects(userId, resourcePath, true);
@@ -192,7 +183,6 @@ public class FileStorageService {
 
     public void moveFile(Long userId, String fromPath, String toPath) {
         log.debug("Move file for userId={}, fromPath={}, toPath={}", userId, fromPath, toPath);
-        ensureBucketExists();
         copyObject(userId, fromPath, toPath);
         delete(userId, fromPath);
         log.info("Moved file for userId={}, fromPath={}, toPath={}", userId, fromPath, toPath);
@@ -200,7 +190,6 @@ public class FileStorageService {
 
     public void moveDirectory(Long userId, String fromPath, String toPath) {
         log.debug("Move directory for userId={}, fromPath={}, toPath={}", userId, fromPath, toPath);
-        ensureBucketExists();
         copyObjectRecursively(userId, fromPath, toPath);
         deleteRecursively(userId, fromPath);
         log.info("Moved directory for userId={}, fromPath={}, toPath={}", userId, fromPath, toPath);
@@ -216,8 +205,6 @@ public class FileStorageService {
     public List<Item> listObjects(Long userId, String directoryPath, boolean isRecursive) {
         log.debug("Listing objects for userId={}, directoryPath={}", userId, directoryPath);
         try {
-            ensureBucketExists();
-
             String prefix = buildUserObjectPrefix(userId, directoryPath);
 
             Iterable<Result<Item>> results = minioClient.listObjects(
@@ -235,27 +222,6 @@ public class FileStorageService {
             items.removeIf(item -> item.objectName().equals(prefix));
             log.debug("Listed {} objects for userId={}, directoryPath={}", items.size(), userId, directoryPath);
             return items;
-        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
-            throw new StorageException("Storage error", e);
-        }
-    }
-
-    private void ensureBucketExists() {
-        try {
-            boolean exists = minioClient.bucketExists(
-                    BucketExistsArgs.builder()
-                            .bucket(minioProperties.bucket())
-                            .build()
-            );
-
-            if (!exists) {
-                log.info("Creating MinIO bucket: {}", minioProperties.bucket());
-                minioClient.makeBucket(
-                        MakeBucketArgs.builder()
-                                .bucket(minioProperties.bucket())
-                                .build()
-                );
-            }
         } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
             throw new StorageException("Storage error", e);
         }
