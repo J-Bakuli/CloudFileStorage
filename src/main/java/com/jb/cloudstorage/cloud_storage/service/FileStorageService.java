@@ -115,18 +115,11 @@ public class FileStorageService {
     public void delete(Long userId, String resourcePath) {
         ResourceType type = FileUtils.getResourceType(resourcePath);
         log.debug("Deleting resource for userId={}, path={}, type={}", userId, resourcePath, type);
-        try {
-            if (type == ResourceType.FILE) {
-                minioClient.removeObject(RemoveObjectArgs.builder()
-                        .bucket(minioProperties.bucket())
-                        .object(fullObjectName(userId, resourcePath))
-                        .build());
-                log.info("Deleted file for userId={}, path={}", userId, resourcePath);
-            } else {
-                deleteRecursively(userId, resourcePath);
-            }
-        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
-            throw new StorageException("Storage error", e);
+        if (type == ResourceType.FILE) {
+            removeObject(fullObjectName(userId, resourcePath));
+            log.info("Deleted file for userId={}, path={}", userId, resourcePath);
+        } else {
+            deleteRecursively(userId, resourcePath);
         }
     }
 
@@ -301,33 +294,20 @@ public class FileStorageService {
         String prefix = buildUserObjectPrefix(userId, normalizedPath);
         log.debug("Deleting directory recursively for userId={}, path={}, prefix={}",
                 userId, resourcePath, prefix);
-        try {
-            List<Item> items = listObjects(userId, normalizedPath, true);
-
-            int deletedCount = 0;
-            for (Item item : items) {
-                String objectName = item.objectName();
-                minioClient.removeObject(RemoveObjectArgs.builder()
-                        .bucket(minioProperties.bucket())
-                        .object(objectName)
-                        .build()
-                );
-                deletedCount++;
-                log.debug("Removed object: {}", objectName);
-            }
-            if (objectExists(userId, normalizedPath)) {
-                minioClient.removeObject(RemoveObjectArgs.builder()
-                        .bucket(minioProperties.bucket())
-                        .object(prefix)
-                        .build()
-                );
-                deletedCount++;
-                log.debug("Removed directory marker: {}", prefix);
-            }
-            log.info("Deleted directory for userId={}, path={}, objectsRemoved={}", userId, resourcePath, deletedCount);
-        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
-            throw new StorageException("Storage error", e);
+        List<Item> items = listObjects(userId, normalizedPath, true);
+        int deletedCount = 0;
+        for (Item item : items) {
+            String objectName = item.objectName();
+            removeObject(objectName);
+            deletedCount++;
+            log.debug("Removed object: {}", objectName);
         }
+        if (objectExists(userId, normalizedPath)) {
+            removeObject(prefix);
+            deletedCount++;
+            log.debug("Removed directory marker: {}", prefix);
+        }
+        log.info("Deleted directory for userId={}, path={}, objectsRemoved={}", userId, resourcePath, deletedCount);
     }
 
 
@@ -338,5 +318,16 @@ public class FileStorageService {
     private String buildUserObjectPrefix(Long userId, String directoryPath) {
         String normalizedPath = FileUtils.normalizeParentPath(directoryPath);
         return fullObjectName(userId, normalizedPath);
+    }
+
+    private void removeObject(String objectName) {
+        try {
+            minioClient.removeObject(RemoveObjectArgs.builder()
+                    .bucket(minioProperties.bucket())
+                    .object(objectName)
+                    .build());
+        } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new StorageException("Storage error", e);
+        }
     }
 }
