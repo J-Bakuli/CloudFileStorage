@@ -1,5 +1,6 @@
 package com.jb.cloudstorage.cloud_storage;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -67,6 +68,95 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("File name is missing"));
+    }
+
+    @Test
+    @Disabled
+    void testUpload_nestedRelativePath_success() throws Exception {
+        basicSignUp();
+        MockMultipartFile nestedFile = new MockMultipartFile(
+                "object",
+                "upload_folder/test.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                content
+        );
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(nestedFile)
+                                .param("path", "")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].path").value("upload_folder/"))
+                .andExpect(jsonPath("$[0].name").value("test.txt"))
+                .andExpect(jsonPath("$[0].size").value(content.length))
+                .andExpect(jsonPath("$[0].type").value("FILE"));
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", "upload_folder/test.txt")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.path").value("upload_folder/"))
+                .andExpect(jsonPath("$.name").value("test.txt"))
+                .andExpect(jsonPath("$.type").value("FILE"));
+    }
+
+    @Test
+    @Disabled
+    void testUpload_nestedRelativePath_withTargetFolder_success() throws Exception {
+        basicSignUp();
+        MockMultipartFile nestedFile = new MockMultipartFile(
+                "object",
+                "upload_folder/test.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                content
+        );
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(nestedFile)
+                                .param("path", "storage_folder/")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].path").value("storage_folder/upload_folder/"))
+                .andExpect(jsonPath("$[0].name").value("test.txt"))
+                .andExpect(jsonPath("$[0].size").value(content.length))
+                .andExpect(jsonPath("$[0].type").value("FILE"));
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", "storage_folder/upload_folder/test.txt")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.path").value("storage_folder/upload_folder/"))
+                .andExpect(jsonPath("$.name").value("test.txt"));
+    }
+
+    @Test
+    @Disabled
+    void testUpload_multipleFiles_returnsAll() throws Exception {
+        basicSignUp();
+        MockMultipartFile file1 = new MockMultipartFile(
+                "object",
+                "one.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                "one".getBytes()
+        );
+        MockMultipartFile file2 = new MockMultipartFile(
+                "object",
+                "two.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                "two".getBytes()
+        );
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file1)
+                                .file(file2)
+                                .param("path", "")
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].name").value("one.txt"))
+                .andExpect(jsonPath("$[1].name").value("two.txt"));
     }
 
     @Test

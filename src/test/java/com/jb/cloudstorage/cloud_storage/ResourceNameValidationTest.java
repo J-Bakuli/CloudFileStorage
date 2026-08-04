@@ -13,8 +13,10 @@ public class ResourceNameValidationTest extends BaseApiIntegrationTest {
     @ParameterizedTest
     @ValueSource(strings = {
             "../secret.txt",
-            "a/b.txt",
+            "folder/../secret.txt",
             "folder\\x.txt",
+            "a//b.txt",
+            "/abs.txt",
             "file:name.txt",
             "file*name.txt",
             "file?name.txt",
