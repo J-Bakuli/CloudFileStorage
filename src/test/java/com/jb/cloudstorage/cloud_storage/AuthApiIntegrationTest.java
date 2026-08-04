@@ -194,6 +194,28 @@ public class AuthApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
+    void testSignOut_unauthorized() throws Exception {
+        basicSignUp();
+        basicSignIn();
+        mockMvc.perform(
+                        get("/api/user/me")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username", is(BASIC_USERNAME)));
+        mockMvc.perform(
+                        post("/api/auth/sign-out")
+                                .session(session)
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(
+                        post("/api/auth/sign-out")
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"));
+    }
+
+    @Test
     void testUserMe_unauthenticated() throws Exception {
         mockMvc.perform(
                         get("/api/user/me"))
