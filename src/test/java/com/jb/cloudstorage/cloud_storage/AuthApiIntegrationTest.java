@@ -170,6 +170,26 @@ public class AuthApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
+    void testSignIn_emptyBody_badRequest() throws Exception {
+        mockMvc.perform(
+                        post("/api/auth/sign-in")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", is("Invalid request body")));
+    }
+
+    @Test
+    void testSignIn_malformedJson_badRequest() throws Exception {
+        mockMvc.perform(
+                        post("/api/auth/sign-in")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"username\":"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", is("Invalid request body")));
+    }
+
+    @Test
     void testSignOut_UserMe_success() throws Exception {
         basicSignUp();
         basicSignIn();

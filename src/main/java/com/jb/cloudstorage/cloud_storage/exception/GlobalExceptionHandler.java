@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -38,6 +39,15 @@ public class GlobalExceptionHandler {
                 List.of());
     }
 
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex, HttpServletRequest request) {
+        log.debug("Bad request: uri={}, message={}", request.getRequestURI(), ex.getMessage());
+        return jsonError(
+                HttpStatus.BAD_REQUEST,
+                "Invalid request body",
+                request.getRequestURI(),
+                List.of());
+    }
     @ExceptionHandler(UsernameAlreadyExistsException.class)
     public ResponseEntity<ApiErrorResponse> handleUsernameAlreadyExistsException(UsernameAlreadyExistsException ex, HttpServletRequest request) {
         log.debug("Username conflict: uri={}, message={}", request.getRequestURI(), ex.getMessage());
