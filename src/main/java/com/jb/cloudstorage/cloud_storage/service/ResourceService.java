@@ -63,7 +63,6 @@ public class ResourceService extends ResourceSupport {
     public List<ResourceResponse> upload(String folderPath, List<MultipartFile> objects) {
         Long userId = getCurrentUserId();
         List<ResourceResponse> response = new ArrayList<>();
-        String normalizedPath = FileUtils.normalizeParentPath(folderPath);
         Set<String> uploadedNames = new HashSet<>();
 
         for (MultipartFile object : objects) {
@@ -74,21 +73,27 @@ public class ResourceService extends ResourceSupport {
             if (!StringUtils.hasText(filename)) {
                 throw new InvalidRequestException("File name is missing");
             }
-            if (!ResourceNameValidator.isSafeName(filename)) {
+            if (!ResourceNameValidator.isSafeUploadFileName(filename)) {
                 throw new InvalidRequestException("Invalid filename");
             }
             String objectPath = FileUtils.joinPath(folderPath, filename);
             if (fileStorageService.objectExists(userId, objectPath)) {
                 throw new ResourceAlreadyExistsException(String.format("File already exists, path=%s", objectPath));
             }
-            ensureNoCaseInsensitiveConflict(userId, normalizedPath, filename, ResourceType.FILE);
-            String key = filename.toLowerCase(Locale.ROOT);
+            FileUtils.PathParts objectParts = FileUtils.splitPath(objectPath);
+            ensureNoCaseInsensitiveConflict(userId, objectParts.parentPath(), objectParts.name(), ResourceType.FILE);
+            String key = objectPath.toLowerCase(Locale.ROOT);
             if (uploadedNames.contains(key)) {
                 throw new ResourceAlreadyExistsException(String.format("File already exists, path=%s", objectPath));
             }
             fileStorageService.uploadFile(userId, folderPath, object);
             uploadedNames.add(key);
-            response = List.of(buildResponse(folderPath, object));
+            response.add(new ResourceResponse(
+                    objectParts.parentPath(),
+                    objectParts.name(),
+                    object.getSize(),
+                    ResourceType.FILE
+            ));
         }
         return response;
     }

@@ -7,10 +7,7 @@ public class ResourceNameValidator {
     private static final String FORBIDDEN_SPECIAL_CHARS = ":*?\"<>|";
 
     public static boolean isSafeName(String s) {
-        if (s == null) {
-            return false;
-        }
-        if (s.isBlank()) {
+        if (s == null || s.isBlank()) {
             return false;
         }
         if (containsForbiddenChars(s)) {
@@ -19,6 +16,26 @@ public class ResourceNameValidator {
         return !(s.contains("..")
                 || s.contains("\\")
                 || s.contains("/"));
+    }
+
+    public static boolean isSafeUploadFileName(String s) {
+        if (s == null || s.isBlank()) {
+            return false;
+        }
+        if (s.contains("\\")
+                || s.contains("..")
+                || s.contains("//")
+                || s.startsWith("/")
+                || s.endsWith("/")) {
+            return false;
+        }
+        String[] segments = s.split("/");
+        for (String segment : segments) {
+            if (!isSafeName(segment)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static boolean containsForbiddenChars(String input) {

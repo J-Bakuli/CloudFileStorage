@@ -71,7 +71,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testUpload_nestedRelativePath_success() throws Exception {
         basicSignUp();
         MockMultipartFile nestedFile = new MockMultipartFile(
@@ -102,7 +101,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testUpload_nestedRelativePath_withTargetFolder_success() throws Exception {
         basicSignUp();
         MockMultipartFile nestedFile = new MockMultipartFile(
@@ -132,7 +130,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testUpload_multipleFiles_returnsAll() throws Exception {
         basicSignUp();
         MockMultipartFile file1 = new MockMultipartFile(
