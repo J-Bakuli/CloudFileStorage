@@ -1,6 +1,5 @@
 package com.jb.cloudstorage.cloud_storage;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -404,7 +403,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    void testMoveFile_notFound() throws Exception {
+    void testMoveFile_fromResourceNotFound() throws Exception {
         basicSignUp();
         mockMvc.perform(
                         post("/api/resource/move")
@@ -413,6 +412,19 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                                 .session(session))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message", containsString("is not found")));
+    }
+
+    @Test
+    void testMoveFile_parentToDoesNotExist() throws Exception {
+        basicSignUp();
+        uploadBasicFile();
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "exam/test.txt")
+                                .param("to", "test/test.txt")
+                                .session(session))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", containsString("Parent directory is not found")));
     }
 
     @Test
@@ -471,6 +483,11 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                                 .session(session))
                 .andExpect(status().isCreated());
         mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "projects")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
                         post("/api/resource/move")
                                 .param("from", "daily/test.txt")
                                 .param("to", "projects/TEST.TXT")
@@ -510,6 +527,11 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     void testMoveFile_move_success() throws Exception {
         basicSignUp();
         uploadBasicFile();
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "exam1")
+                                .session(session))
+                .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/resource/move")
                                 .param("from", "exam/test.txt")

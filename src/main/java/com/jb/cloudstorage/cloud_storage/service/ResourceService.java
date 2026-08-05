@@ -179,6 +179,10 @@ public class ResourceService extends ResourceSupport {
             throw new ResourceAlreadyExistsException(String.format("File already exists, path=%s", toPath));
         }
 
+        if (!parentExists(userId, parentPath)) {
+            throw new ResourceNotFoundException(String.format("Parent directory is not found, path=%s", parentPath));
+        }
+
         ensureNoCaseInsensitiveConflict(userId, parentPath, requestedName, toType);
 
         if (fromType == ResourceType.FILE) {
