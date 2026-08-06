@@ -163,13 +163,22 @@ public class ResourceService extends ResourceSupport {
         ResourceType fromType = FileUtils.getResourceType(fromPath);
         ResourceType toType = FileUtils.getResourceType(toPath);
 
-        String normalizedPath = FileUtils.normalizeParentPath(toPath);
-        FileUtils.PathParts parts = FileUtils.splitPath(normalizedPath);
+        String normalizedToPath = FileUtils.normalizeParentPath(toPath);
+        String normalizedFromPath = FileUtils.normalizeParentPath(fromPath);
+        FileUtils.PathParts parts = FileUtils.splitPath(normalizedToPath);
         String parentPath = parts.parentPath();
         String requestedName = parts.name();
 
         if (!resourceExists(userId, fromPath, fromType)) {
             throw new ResourceNotFoundException(String.format("Resource is not found, path=%s", fromPath));
+        }
+
+        if (toType == ResourceType.FILE && toPath.equals(fromPath)) {
+            throw new InvalidRequestException(String.format("Invalid operation request, cannot move, fromPath=%s, toPath=%s",
+                    fromPath, toPath));
+        } else if (toType == ResourceType.DIRECTORY && normalizedToPath.startsWith(normalizedFromPath)) {
+            throw new InvalidRequestException(String.format("Invalid operation request, cannot move, fromPath=%s, toPath=%s",
+                    fromPath, toPath));
         }
 
         if (resourceExists(userId, toPath, toType)) {

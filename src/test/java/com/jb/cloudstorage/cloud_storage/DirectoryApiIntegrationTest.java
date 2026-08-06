@@ -396,6 +396,59 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
+    void testMoveDirectory_moveParentToChild_badRequest() throws Exception {
+        basicSignUp();
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "exam1/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "exam1/exam2/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "exam1/")
+                                .param("to", "exam1/exam2/exam1/")
+                                .session(session))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Invalid operation request, cannot move")));
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "exam1/")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("exam2"))
+                .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
+    }
+
+    @Test
+    void testMoveDirectory_samePath_badRequest() throws Exception {
+        basicSignUp();
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "exam1/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "exam1/")
+                                .param("to", "exam1/")
+                                .session(session))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Invalid operation request, cannot move")));
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("exam1"))
+                .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
+    }
+
+    @Test
     void testMoveDirectory_move_success() throws Exception {
         basicSignUp();
         mockMvc.perform(
