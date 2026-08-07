@@ -1,7 +1,6 @@
 package com.jb.cloudstorage.cloud_storage;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
@@ -271,7 +270,6 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testMoveDirectory_resource_type_change() throws Exception {
         basicSignUp();
         mockMvc.perform(

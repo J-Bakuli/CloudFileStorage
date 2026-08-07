@@ -163,6 +163,11 @@ public class ResourceService extends ResourceSupport {
         ResourceType fromType = FileUtils.getResourceType(fromPath);
         ResourceType toType = FileUtils.getResourceType(toPath);
 
+        if (fromType != toType) {
+            throw new InvalidRequestException(String.format("Invalid operation request, cannot move, fromType=%s, toType=%s",
+                    fromType, toType));
+        }
+
         String normalizedToPath = FileUtils.normalizeParentPath(toPath);
         String normalizedFromPath = FileUtils.normalizeParentPath(fromPath);
         FileUtils.PathParts parts = FileUtils.splitPath(normalizedToPath);

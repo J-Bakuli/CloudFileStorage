@@ -1,6 +1,5 @@
 package com.jb.cloudstorage.cloud_storage;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -448,7 +447,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testMoveFile_resource_type_change() throws Exception {
         basicSignUp();
         uploadBasicFile();
@@ -469,7 +467,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testMoveFile_resource_type_change_another_parent() throws Exception {
         basicSignUp();
         uploadBasicFile();
