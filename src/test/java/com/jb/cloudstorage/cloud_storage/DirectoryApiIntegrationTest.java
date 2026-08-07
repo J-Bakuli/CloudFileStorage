@@ -1,6 +1,7 @@
 package com.jb.cloudstorage.cloud_storage;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
@@ -267,6 +268,31 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                                 .session(session))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message", containsString("is not found")));
+    }
+
+    @Test
+    @Disabled
+    void testMoveDirectory_resource_type_change() throws Exception {
+        basicSignUp();
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "exam1/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "exam1/")
+                                .param("to", "exam1")
+                                .session(session))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Invalid operation request")));
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("exam1"))
+                .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
     }
 
     @Test

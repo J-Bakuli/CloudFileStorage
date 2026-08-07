@@ -1,5 +1,6 @@
 package com.jb.cloudstorage.cloud_storage;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -444,6 +445,53 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                                 .session(session))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("already exists")));
+    }
+
+    @Test
+    @Disabled
+    void testMoveFile_resource_type_change() throws Exception {
+        basicSignUp();
+        uploadBasicFile();
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "exam/test.txt")
+                                .param("to", "exam/test.txt/")
+                                .session(session))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Invalid operation request")));
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", "exam/test.txt")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("test.txt"))
+                .andExpect(jsonPath("$.type").value("FILE"));
+    }
+
+    @Test
+    @Disabled
+    void testMoveFile_resource_type_change_another_parent() throws Exception {
+        basicSignUp();
+        uploadBasicFile();
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "exam1/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "exam/test.txt")
+                                .param("to", "exam1/test.txt/")
+                                .session(session))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Invalid operation request")));
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", "exam/test.txt")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("test.txt"))
+                .andExpect(jsonPath("$.type").value("FILE"));
     }
 
     @Test
