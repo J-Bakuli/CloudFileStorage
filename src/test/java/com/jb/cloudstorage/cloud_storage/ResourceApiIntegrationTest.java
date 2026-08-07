@@ -509,13 +509,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                                 .session(session))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("already exists")));
-        mockMvc.perform(
-                        post("/api/resource/move")
-                                .param("from", "test/test.txt")
-                                .param("to", "test/TEST.TXT")
-                                .session(session))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message", containsString("already exists")));
     }
 
     @Test
@@ -602,7 +595,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testMoveFile_rename_caseInsensitiveRename() throws Exception {
         basicSignUp();
         uploadBasicFile();

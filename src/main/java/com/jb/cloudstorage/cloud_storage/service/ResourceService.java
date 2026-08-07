@@ -197,7 +197,7 @@ public class ResourceService extends ResourceSupport {
             throw new ResourceNotFoundException(String.format("Parent directory is not found, path=%s", parentPath));
         }
 
-        ensureNoCaseInsensitiveConflict(userId, parentPath, requestedName, toType);
+        ensureNoCaseInsensitiveConflict(userId, parentPath, requestedName, toType, fromPath);
 
         if (fromType == ResourceType.FILE) {
             fileStorageService.moveFile(userId, fromPath, toPath);

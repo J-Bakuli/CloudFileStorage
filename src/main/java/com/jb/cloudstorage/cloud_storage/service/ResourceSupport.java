@@ -21,19 +21,35 @@ class ResourceSupport {
     protected final FileStorageService fileStorageService;
 
     void ensureNoCaseInsensitiveConflict(Long userId, String parentPath, String resourceName, ResourceType type) {
+        ensureNoCaseInsensitiveConflict(userId, parentPath, resourceName, type, null);
+    }
+
+    void ensureNoCaseInsensitiveConflict(Long userId, String parentPath, String resourceName, ResourceType type,
+                                         String excludePath) {
+        String requestedName = resourceName.trim();
+        String excludedRelativePath = excludePath == null ? null : FileUtils.normalizeParentPath(excludePath);
         List<Item> items = fileStorageService.listObjects(userId, parentPath, false);
         for (Item item : items) {
-            String objectName = item.objectName();
-            String relativePath = FileUtils.getRelativePath(userId, objectName);
-            FileUtils.PathParts pathParts = FileUtils.splitPath(relativePath);
-
-            if (pathParts.type() == type && pathParts.name().equalsIgnoreCase(resourceName.trim())) {
-                if (type == ResourceType.DIRECTORY) {
-                    throw new ResourceAlreadyExistsException(String.format("Directory already exists, path=%s", resourceName));
-                }
-                throw new ResourceAlreadyExistsException(String.format("File already exists, path=%s", resourceName));
+            String relativePath = FileUtils.getRelativePath(userId, item.objectName());
+            if (isSameResource(relativePath, excludedRelativePath)) {
+                continue;
             }
+
+            FileUtils.PathParts candidate = FileUtils.splitPath(relativePath);
+            if (candidate.type() != type || !candidate.name().equalsIgnoreCase(requestedName)) {
+                continue;
+            }
+
+            if (type == ResourceType.DIRECTORY) {
+                throw new ResourceAlreadyExistsException(String.format("Directory already exists, path=%s", resourceName));
+            }
+            throw new ResourceAlreadyExistsException(String.format("File already exists, path=%s", resourceName));
         }
+    }
+
+    private boolean isSameResource(String relativePath, String excludedRelativePath) {
+        return excludedRelativePath != null
+                && FileUtils.normalizeParentPath(relativePath).equalsIgnoreCase(excludedRelativePath);
     }
 
     boolean resourceExists(Long userId, String resourcePath, ResourceType type) {

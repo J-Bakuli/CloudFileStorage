@@ -352,13 +352,6 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                                 .session(session))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("already exists")));
-        mockMvc.perform(
-                        post("/api/resource/move")
-                                .param("from", "dir/")
-                                .param("to", " DIR /")
-                                .session(session))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message", containsString("already exists")));
     }
 
     @Test
@@ -556,7 +549,6 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testMoveDirectory_rename_caseInsensitiveRename() throws Exception {
         basicSignUp();
         mockMvc.perform(
