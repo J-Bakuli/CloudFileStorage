@@ -1,6 +1,7 @@
 package com.jb.cloudstorage.cloud_storage;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
@@ -552,6 +553,39 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                                 .session(session))
                 .andExpect(status().isNotFound());
         getBasicFile();
+    }
+
+    @Test
+    @Disabled
+    void testMoveDirectory_rename_caseInsensitiveRename() throws Exception {
+        basicSignUp();
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "exam1/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "exam1/")
+                                .param("to", "eXAm1/")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("eXAm1"))
+                .andExpect(jsonPath("$.size").doesNotExist())
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "exam1/")
+                                .session(session))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", "eXAm1/")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("eXAm1"))
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
     }
 
     @Test

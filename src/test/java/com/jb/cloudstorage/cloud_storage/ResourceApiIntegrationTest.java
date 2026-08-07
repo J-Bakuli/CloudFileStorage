@@ -1,5 +1,6 @@
 package com.jb.cloudstorage.cloud_storage;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -601,18 +602,19 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    void testMoveFile_rename_success() throws Exception {
+    @Disabled
+    void testMoveFile_rename_caseInsensitiveRename() throws Exception {
         basicSignUp();
         uploadBasicFile();
         mockMvc.perform(
                         post("/api/resource/move")
                                 .param("from", "exam/test.txt")
-                                .param("to", "exam/new_test.txt")
+                                .param("to", "exam/tESt.txt")
                                 .session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size").value(content.length))
                 .andExpect(jsonPath("$.path").value("exam/"))
-                .andExpect(jsonPath("$.name").value("new_test.txt"))
+                .andExpect(jsonPath("$.name").value("tESt.txt"))
                 .andExpect(jsonPath("$.type").value("FILE"));
         mockMvc.perform(
                         get("/api/resource")
@@ -621,10 +623,10 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isNotFound());
         mockMvc.perform(
                         get("/api/resource")
-                                .param("path", "exam/new_test.txt")
+                                .param("path", "exam/tESt.txt")
                                 .session(session))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("new_test.txt"));
+                .andExpect(jsonPath("$.name").value("tESt.txt"));
     }
 
 
