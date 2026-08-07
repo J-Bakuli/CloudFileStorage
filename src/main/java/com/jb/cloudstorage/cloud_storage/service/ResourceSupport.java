@@ -85,15 +85,6 @@ class ResourceSupport {
         return !fileStorageService.listObjects(userId, parentPath, false).isEmpty();
     }
 
-    ResourceResponse buildResponse(String folderPath, MultipartFile file) {
-        return new ResourceResponse(
-                FileUtils.normalizeParentPath(folderPath),
-                file.getOriginalFilename(),
-                file.getSize(),
-                ResourceType.FILE
-        );
-    }
-
     List<ResourceResponse> buildResponse(Long userId, List<Item> objects) {
         return objects.stream().map(
                         item -> {
