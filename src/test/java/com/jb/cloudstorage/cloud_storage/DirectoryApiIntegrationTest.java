@@ -549,6 +549,32 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
+    void testMoveDirectory_rename_similarPrefix_success() throws Exception {
+        basicSignUp();
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "exam1/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "exam1/")
+                                .param("to", "exam12/")
+                                .session(session))
+                .andExpect(status().isOk());
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "exam12/")
+                                .session(session))
+                .andExpect(status().isOk());
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "exam1/")
+                                .session(session))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void testMoveDirectory_rename_caseInsensitiveRename() throws Exception {
         basicSignUp();
         mockMvc.perform(
