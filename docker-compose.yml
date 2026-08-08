@@ -3,7 +3,7 @@ services:
     image: postgres:16
     container_name: cloud_storage_db
     ports:
-      - "5433:5432"
+      - ${POSTGRES_PORTS}
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -15,8 +15,8 @@ services:
     container_name: cloud_storage_minio
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - ${MINIO_API_PORTS_1}
+      - ${MINIO_API_PORTS_2}
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
