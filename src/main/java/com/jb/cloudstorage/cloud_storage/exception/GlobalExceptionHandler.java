@@ -12,6 +12,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.time.Instant;
 import java.util.List;
@@ -35,6 +36,16 @@ public class GlobalExceptionHandler {
         return jsonError(
                 HttpStatus.BAD_REQUEST,
                 "Invalid path",
+                request.getRequestURI(),
+                List.of());
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiErrorResponse> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex, HttpServletRequest request) {
+        log.debug("Max upload size exceeded: uri={}, message={}", request.getRequestURI(), ex.getMessage());
+        return jsonError(
+                HttpStatus.PAYLOAD_TOO_LARGE,
+                "Multipart request is too large",
                 request.getRequestURI(),
                 List.of());
     }
