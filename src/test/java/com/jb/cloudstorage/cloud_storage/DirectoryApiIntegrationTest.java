@@ -1,7 +1,6 @@
 package com.jb.cloudstorage.cloud_storage;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
@@ -55,6 +54,28 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
+    void testGetDirectory_invalidPath() throws Exception {
+        basicSignUp();
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "/")
+                                .session(session))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid path"));
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "")
+                                .session(session))
+                .andExpect(status().isOk());
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "exam")
+                                .session(session))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Directory path must end with /, path=exam"));
+    }
+
+    @Test
     void testCreateDirectory_unauthenticated() throws Exception {
         mockMvc.perform(
                         post("/api/directory")
@@ -71,7 +92,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
-                                .param("path", "newdir")
+                                .param("path", "newdir/")
                                 .session(session))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
@@ -87,6 +108,17 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(jsonPath("$[0].name").value("newdir"))
                 .andExpect(jsonPath("$.size").doesNotExist())
                 .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
+    }
+
+    @Test
+    void testCreateDirectory_invalidPath() throws Exception {
+        basicSignUp();
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "newdir")
+                                .session(session))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Directory path must end with /, path=newdir"));
     }
 
     @Test
@@ -121,13 +153,13 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
         mockMvc.perform(
                         get("/api/directory")
-                                .param("path", "")
+                                .param("path", "level1/")
                                 .session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].path").isEmpty())
-                .andExpect(jsonPath("$[0].name").value("level1"))
+                .andExpect(jsonPath("$[0].path").value("level1/"))
+                .andExpect(jsonPath("$[0].name").value("level2"))
                 .andExpect(jsonPath("$[0].size").doesNotExist())
                 .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
     }
@@ -148,7 +180,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
-                                .param("path", "projects")
+                                .param("path", "projects/")
                                 .session(session))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
@@ -188,7 +220,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/directory")
-                                .param("path", "archive/NEWDIR")
+                                .param("path", "archive/NEWDIR/")
                                 .session(session))
                 .andExpect(status().isCreated());
     }
@@ -221,7 +253,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
-                                .param("path", "newdir")
+                                .param("path", "newdir/")
                                 .session(session))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
@@ -299,7 +331,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
-                                .param("path", "dir")
+                                .param("path", "dir/")
                                 .session(session))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
@@ -308,7 +340,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
         mockMvc.perform(
                         post("/api/directory")
-                                .param("path", "newdir")
+                                .param("path", "newdir/")
                                 .session(session))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
@@ -329,7 +361,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
-                                .param("path", "dir")
+                                .param("path", "dir/")
                                 .session(session))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
@@ -338,7 +370,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
         mockMvc.perform(
                         post("/api/directory")
-                                .param("path", "newdir")
+                                .param("path", "newdir/")
                                 .session(session))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
@@ -471,7 +503,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
-                                .param("path", "dir")
+                                .param("path", "dir/")
                                 .session(session))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
@@ -512,7 +544,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
-                                .param("path", "dir")
+                                .param("path", "dir/")
                                 .session(session))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
@@ -611,7 +643,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         basicSignUp();
         mockMvc.perform(
                         post("/api/directory")
-                                .param("path", "other")
+                                .param("path", "other/")
                                 .session(session))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
@@ -620,7 +652,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
         mockMvc.perform(
                         post("/api/directory")
-                                .param("path", "dir")
+                                .param("path", "dir/")
                                 .session(session))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))

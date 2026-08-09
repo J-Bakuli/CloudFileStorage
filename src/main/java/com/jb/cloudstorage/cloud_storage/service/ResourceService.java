@@ -50,6 +50,10 @@ public class ResourceService extends ResourceSupport {
     public List<ResourceResponse> getDirectory(String fullPath) {
         Long userId = getCurrentUserId();
 
+        if (!fullPath.isBlank() && !fullPath.endsWith("/")) {
+            throw new InvalidRequestException(String.format("Directory path must end with /, path=%s", fullPath));
+        }
+
         String normalizedPath = FileUtils.normalizeParentPath(fullPath);
 
         if (!parentExists(userId, normalizedPath)) {
@@ -100,6 +104,11 @@ public class ResourceService extends ResourceSupport {
 
     public ResourceResponse createDirectory(String directoryPath) {
         Long userId = getCurrentUserId();
+
+        if (!directoryPath.endsWith("/")) {
+            throw new InvalidRequestException(String.format("Directory path must end with /, path=%s", directoryPath));
+        }
+
         String normalizedPath = FileUtils.normalizeParentPath(directoryPath);
 
         FileUtils.PathParts parts = FileUtils.splitPath(normalizedPath);

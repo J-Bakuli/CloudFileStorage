@@ -1,6 +1,5 @@
 package com.jb.cloudstorage.cloud_storage;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -334,14 +333,14 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
         uploadBasicFile();
         mockMvc.perform(
                         get("/api/directory")
-                                .param("path", "")
+                                .param("path", "exam/")
                                 .session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].path").value(""))
-                .andExpect(jsonPath("$[0].name").value("exam"))
-                .andExpect(jsonPath("$[0].size").doesNotExist())
-                .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
+                .andExpect(jsonPath("$[0].path").value("exam/"))
+                .andExpect(jsonPath("$[0].name").value("test.txt"))
+                .andExpect(jsonPath("$[0].size").value(5))
+                .andExpect(jsonPath("$[0].type").value("FILE"));
         mockMvc.perform(
                         delete("/api/resource")
                                 .param("path", "exam/")
@@ -523,7 +522,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/directory")
-                                .param("path", "projects")
+                                .param("path", "projects/")
                                 .session(session))
                 .andExpect(status().isCreated());
         mockMvc.perform(
@@ -568,7 +567,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
         uploadBasicFile();
         mockMvc.perform(
                         post("/api/directory")
-                                .param("path", "exam1")
+                                .param("path", "exam1/")
                                 .session(session))
                 .andExpect(status().isCreated());
         mockMvc.perform(
