@@ -3,6 +3,7 @@ package com.jb.cloudstorage.cloud_storage;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.hamcrest.Matchers.containsString;
@@ -693,5 +694,123 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(jsonPath("$.path").value("other/dir/"))
                 .andExpect(jsonPath("$.name").value("test.txt"))
                 .andExpect(jsonPath("$.type").value("FILE"));
+    }
+
+    @Test
+    void testDirectoryMerge_success() throws Exception {
+        basicSignUp();
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "data/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "data/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "data/")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].path").value("data/"))
+                .andExpect(jsonPath("$[0].name").value("test.txt"))
+                .andExpect(jsonPath("$[0].size").value(5))
+                .andExpect(jsonPath("$[0].type").value("FILE"));
+    }
+
+    @Test
+    void testDirectoryMerge_conflictFile() throws Exception {
+        basicSignUp();
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "data/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "data/")
+                                .session(session))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("File already exists, path=data/test.txt"));
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "data/")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].path").value("data/"))
+                .andExpect(jsonPath("$[0].name").value("test.txt"))
+                .andExpect(jsonPath("$[0].size").value(5))
+                .andExpect(jsonPath("$[0].type").value("FILE"));
+    }
+
+    @Test
+    void testDirectoryMerge_twoFilesInOneQuery_success() throws Exception {
+        basicSignUp();
+        MockMultipartFile file1 = new MockMultipartFile(
+                "object",
+                "cat.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                content
+        );
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .file(file1)
+                                .param("path", "data/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "data/")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].path").value("data/"))
+                .andExpect(jsonPath("$[0].name").value("cat.txt"))
+                .andExpect(jsonPath("$[0].size").value(5))
+                .andExpect(jsonPath("$[0].type").value("FILE"))
+                .andExpect(jsonPath("$[1].path").value("data/"))
+                .andExpect(jsonPath("$[1].name").value("test.txt"))
+                .andExpect(jsonPath("$[1].size").value(5))
+                .andExpect(jsonPath("$[1].type").value("FILE"));
+    }
+
+    @Test
+    void testDirectoryMerge_nestedRelativeFilename_success() throws Exception {
+        basicSignUp();
+        MockMultipartFile file = new MockMultipartFile(
+                "object",
+                "data/extra.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                content
+        );
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "data/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", "data/")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].path").value("data/"))
+                .andExpect(jsonPath("$[0].name").value("extra.txt"))
+                .andExpect(jsonPath("$[0].size").value(5))
+                .andExpect(jsonPath("$[0].type").value("FILE"));
     }
 }
