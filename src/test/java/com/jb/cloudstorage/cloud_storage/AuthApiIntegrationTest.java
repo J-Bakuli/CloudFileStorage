@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
@@ -142,6 +143,48 @@ public class AuthApiIntegrationTest extends BaseApiIntegrationTest {
     void testSignIn_success() throws Exception {
         basicSignUp();
         basicSignIn();
+    }
+
+    @Test
+    void testAuthenticatedPrincipal_success() throws Exception {
+        basicSignUp();
+        basicSignIn();
+        uploadBasicFile();
+        mockMvc.perform(
+                        post("/api/auth/sign-out")
+                                .session(session)
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+        String username = "AlexanderPushkin";
+        String password = "%shsHjsn45S";
+        session = new MockHttpSession();
+        SignUpRequest signUpRequest = new SignUpRequest(username, password);
+        mockMvc.perform(
+                        post("/api/auth/sign-up")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(signUpRequest))
+                                .session(session))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.username", is(username)));
+
+        SignInRequest signInRequest = new SignInRequest(username, password);
+        mockMvc.perform(
+                        post("/api/auth/sign-in")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(signInRequest))
+                                .session(session))
+                .andExpect(status().isOk());
+        mockMvc.perform(
+                        get("/api/user/me")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username", is(username)));
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", "exam/test.txt")
+                                .session(session))
+                .andExpect(status().isNotFound());
     }
 
     @Test
