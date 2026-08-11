@@ -83,6 +83,22 @@ public abstract class BaseApiIntegrationTest {
                 .andExpect(status().isCreated());
     }
 
+    void basicSignOut() throws Exception {
+        mockMvc.perform(
+                        post("/api/auth/sign-out")
+                                .session(session)
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+    }
+
+    void basicGetUserMe() throws Exception {
+        mockMvc.perform(
+                        get("/api/user/me")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username", is(BASIC_USERNAME)));
+    }
+
     void getBasicFile() throws Exception {
         mockMvc.perform(
                         get("/api/resource")

@@ -150,11 +150,7 @@ public class AuthApiIntegrationTest extends BaseApiIntegrationTest {
         basicSignUp();
         basicSignIn();
         uploadBasicFile();
-        mockMvc.perform(
-                        post("/api/auth/sign-out")
-                                .session(session)
-                                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
+        basicSignOut();
 
         String username = "AlexanderPushkin";
         String password = "%shsHjsn45S";
@@ -236,16 +232,8 @@ public class AuthApiIntegrationTest extends BaseApiIntegrationTest {
     void testSignOut_UserMe_success() throws Exception {
         basicSignUp();
         basicSignIn();
-        mockMvc.perform(
-                        get("/api/user/me")
-                                .session(session))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username", is(BASIC_USERNAME)));
-        mockMvc.perform(
-                        post("/api/auth/sign-out")
-                                .session(session)
-                                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
+        basicGetUserMe();
+        basicSignOut();
         mockMvc.perform(
                         get("/api/user/me")
                                 .session(session))
@@ -260,16 +248,8 @@ public class AuthApiIntegrationTest extends BaseApiIntegrationTest {
     void testSignOut_unauthorized() throws Exception {
         basicSignUp();
         basicSignIn();
-        mockMvc.perform(
-                        get("/api/user/me")
-                                .session(session))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username", is(BASIC_USERNAME)));
-        mockMvc.perform(
-                        post("/api/auth/sign-out")
-                                .session(session)
-                                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
+        basicGetUserMe();
+        basicSignOut();
         mockMvc.perform(
                         post("/api/auth/sign-out")
                                 .contentType(MediaType.APPLICATION_JSON))
