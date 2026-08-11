@@ -1,5 +1,6 @@
 package com.jb.cloudstorage.cloud_storage;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -620,6 +621,101 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(jsonPath("$.name").value("tESt.txt"));
     }
 
+    @Test
+    void testCoexistence_file_and_directory_areAccessible() throws Exception {
+        prepareCoexistenceState();
+        assertDirectoryContains("exam/");
+        assertStandaloneFileExists("exam");
+    }
+
+    @Test
+    void testCoexistence_file_deletion_directory_isAccessible() throws Exception {
+        prepareCoexistenceState();
+        mockMvc.perform(
+                        delete("/api/resource")
+                                .param("path", "exam")
+                                .session(session))
+                .andExpect(status().isNoContent());
+        assertDirectoryContains("exam/");
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", "exam")
+                                .session(session))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testCoexistence_directory_deletion_file_isAccessible() throws Exception {
+        prepareCoexistenceState();
+        mockMvc.perform(
+                        delete("/api/resource")
+                                .param("path", "exam/")
+                                .session(session))
+                .andExpect(status().isNoContent());
+        assertDirectoryNotFound("exam/");
+        assertStandaloneFileExists("exam");
+    }
+
+    @Test
+    @Disabled
+    void testCoexistence_file_rename_and_back_file_and_directory_areAccessible() throws Exception {
+        prepareCoexistenceState();
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "exam")
+                                .param("to", "exam1")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size").value(5))
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("exam1"))
+                .andExpect(jsonPath("$.type").value("FILE"));
+        assertStandaloneFileExists("exam1");
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "exam1")
+                                .param("to", "exam")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size").value(5))
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("exam"))
+                .andExpect(jsonPath("$.type").value("FILE"));
+        assertDirectoryContains("exam/");
+        assertStandaloneFileExists("exam");
+    }
+
+    @Test
+    @Disabled
+    void testCoexistence_directory_move_and_back_file_and_directory_areAccessible() throws Exception {
+        prepareCoexistenceState();
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "exam/")
+                                .param("to", "exam1/")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size").doesNotExist())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("exam1"))
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+        assertDirectoryNotFound("exam/");
+        assertDirectoryContains("exam1/");
+        assertStandaloneFileExists("exam");
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "exam1/")
+                                .param("to", "exam/")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size").doesNotExist())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("exam"))
+                .andExpect(jsonPath("$.type").value("DIRECTORY"));
+        assertDirectoryContains("exam/");
+        assertDirectoryNotFound("exam1/");
+        assertStandaloneFileExists("exam");
+    }
 
     @Test
     void testSearch_unauthenticated() throws Exception {
@@ -854,6 +950,75 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(jsonPath("$[0].path").value("exam/"))
                 .andExpect(jsonPath("$[0].name").value("test.txt"))
                 .andExpect(jsonPath("$[0].size").value(content.length))
+                .andExpect(jsonPath("$[0].type").value("FILE"));
+    }
+
+    private void prepareCoexistenceState() throws Exception {
+        basicSignUp();
+        mockMvc.perform(
+                        post("/api/directory")
+                                .param("path", "exam/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "exam/")
+                                .session(session))
+                .andExpect(status().isCreated());
+        MockMultipartFile sourceFile = new MockMultipartFile(
+                "object",
+                "exam.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                content
+        );
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(sourceFile)
+                                .param("path", "")
+                                .session(session))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/api/resource/move")
+                                .param("from", "exam.txt")
+                                .param("to", "exam")
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size").value(5))
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("exam"))
+                .andExpect(jsonPath("$.type").value("FILE"));
+    }
+
+    private void assertStandaloneFileExists(String path) throws Exception {
+        mockMvc.perform(
+                        get("/api/resource")
+                                .param("path", path)
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value(path))
+                .andExpect(jsonPath("$.type").value("FILE"));
+    }
+
+    private void assertDirectoryNotFound(String path) throws Exception {
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", path)
+                                .session(session))
+                .andExpect(status().isNotFound());
+    }
+
+    private void assertDirectoryContains(String path) throws Exception {
+        mockMvc.perform(
+                        get("/api/directory")
+                                .param("path", path)
+                                .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].size").value(5))
+                .andExpect(jsonPath("$[0].path").value(path))
+                .andExpect(jsonPath("$[0].name").value("test.txt"))
                 .andExpect(jsonPath("$[0].type").value("FILE"));
     }
 }
