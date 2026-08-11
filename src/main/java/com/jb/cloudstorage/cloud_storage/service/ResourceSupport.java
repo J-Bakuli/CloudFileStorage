@@ -1,17 +1,12 @@
 package com.jb.cloudstorage.cloud_storage.service;
 
 import com.jb.cloudstorage.cloud_storage.dto.ResourceResponse;
-import com.jb.cloudstorage.cloud_storage.exception.InvalidCredentialsException;
 import com.jb.cloudstorage.cloud_storage.exception.ResourceAlreadyExistsException;
-import com.jb.cloudstorage.cloud_storage.model.CustomUserDetails;
 import com.jb.cloudstorage.cloud_storage.model.ResourceType;
 import com.jb.cloudstorage.cloud_storage.repository.UserRepository;
 import com.jb.cloudstorage.cloud_storage.util.FileUtils;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Comparator;
 import java.util.List;
@@ -63,16 +58,6 @@ class ResourceSupport {
         String path = FileUtils.normalizeParentPath(directoryPath);
         return fileStorageService.objectExists(userId, path)
                 || !fileStorageService.listObjects(userId, path, false).isEmpty();
-    }
-
-    Long getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof CustomUserDetails && !(authentication instanceof AnonymousAuthenticationToken)) {
-            return ((CustomUserDetails) principal).getId();
-        } else {
-            throw new InvalidCredentialsException("Cannot retrieve login or password");
-        }
     }
 
     boolean parentExists(Long userId, String parentPath) {

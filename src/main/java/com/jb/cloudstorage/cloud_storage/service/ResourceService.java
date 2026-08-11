@@ -29,9 +29,7 @@ public class ResourceService extends ResourceSupport {
         super(userRepository, fileStorageService);
     }
 
-    public ResourceResponse get(String fullPath) {
-        Long userId = getCurrentUserId();
-
+    public ResourceResponse get(Long userId, String fullPath) {
         FileUtils.PathParts pathParts = FileUtils.splitPath(fullPath);
 
         if (!fileStorageService.objectExists(userId, fullPath)) {
@@ -47,9 +45,7 @@ public class ResourceService extends ResourceSupport {
                 pathParts.type());
     }
 
-    public List<ResourceResponse> getDirectory(String fullPath) {
-        Long userId = getCurrentUserId();
-
+    public List<ResourceResponse> getDirectory(Long userId, String fullPath) {
         if (!fullPath.isBlank() && !fullPath.endsWith("/")) {
             throw new InvalidRequestException(String.format("Directory path must end with /, path=%s", fullPath));
         }
@@ -64,8 +60,7 @@ public class ResourceService extends ResourceSupport {
         return buildResponse(userId, objects);
     }
 
-    public List<ResourceResponse> upload(String folderPath, List<MultipartFile> objects) {
-        Long userId = getCurrentUserId();
+    public List<ResourceResponse> upload(Long userId, String folderPath, List<MultipartFile> objects) {
         List<ResourceResponse> response = new ArrayList<>();
         Set<String> uploadedNames = new HashSet<>();
 
@@ -102,9 +97,7 @@ public class ResourceService extends ResourceSupport {
         return response;
     }
 
-    public ResourceResponse createDirectory(String directoryPath) {
-        Long userId = getCurrentUserId();
-
+    public ResourceResponse createDirectory(Long userId, String directoryPath) {
         if (!directoryPath.endsWith("/")) {
             throw new InvalidRequestException(String.format("Directory path must end with /, path=%s", directoryPath));
         }
@@ -134,8 +127,7 @@ public class ResourceService extends ResourceSupport {
                 ResourceType.DIRECTORY);
     }
 
-    public void delete(String resourcePath) {
-        Long userId = getCurrentUserId();
+    public void delete(Long userId, String resourcePath) {
         ResourceType type = FileUtils.getResourceType(resourcePath);
 
         if (!resourceExists(userId, resourcePath, type)) {
@@ -145,8 +137,7 @@ public class ResourceService extends ResourceSupport {
         fileStorageService.delete(userId, resourcePath);
     }
 
-    public ResponseEntity<InputStreamResource> download(String resourcePath) {
-        Long userId = getCurrentUserId();
+    public ResponseEntity<InputStreamResource> download(Long userId, String resourcePath) {
         ResourceType type = FileUtils.getResourceType(resourcePath);
 
         if (!resourceExists(userId, resourcePath, type)) {
@@ -167,8 +158,7 @@ public class ResourceService extends ResourceSupport {
                 .body(fileStorageService.download(userId, resourcePath));
     }
 
-    public ResourceResponse move(String fromPath, String toPath) {
-        Long userId = getCurrentUserId();
+    public ResourceResponse move(Long userId, String fromPath, String toPath) {
         ResourceType fromType = FileUtils.getResourceType(fromPath);
         ResourceType toType = FileUtils.getResourceType(toPath);
 
@@ -224,11 +214,10 @@ public class ResourceService extends ResourceSupport {
         );
     }
 
-    public List<ResourceResponse> search(String query) {
+    public List<ResourceResponse> search(Long userId, String query) {
         if (query.trim().isBlank()) {
             throw new InvalidRequestException("Query is empty");
         }
-        Long userId = getCurrentUserId();
         List<Item> items = fileStorageService.search(userId, query);
         return buildResponse(userId, items);
     }

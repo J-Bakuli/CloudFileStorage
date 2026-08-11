@@ -1,6 +1,7 @@
 package com.jb.cloudstorage.cloud_storage.controller;
 
 import com.jb.cloudstorage.cloud_storage.dto.ResourceResponse;
+import com.jb.cloudstorage.cloud_storage.model.CustomUserDetails;
 import com.jb.cloudstorage.cloud_storage.service.ResourceService;
 import com.jb.cloudstorage.cloud_storage.util.SafePath;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +12,7 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,10 +40,11 @@ public class ResourceController {
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public List<ResourceResponse> upload(
+            @AuthenticationPrincipal CustomUserDetails user,
             @RequestParam("path") @SafePath String path,
             @RequestParam("object") List<MultipartFile> objects
     ) {
-        return resourceService.upload(path, objects);
+        return resourceService.upload(user.getId(), path, objects);
     }
 
     @Operation(summary = "Get resource info")
@@ -51,9 +54,10 @@ public class ResourceController {
     @ApiResponse(responseCode = "404", description = "Resource is not found")
     @GetMapping
     public ResourceResponse get(
+            @AuthenticationPrincipal CustomUserDetails user,
             @RequestParam("path") @SafePath String path
     ) {
-        return resourceService.get(path);
+        return resourceService.get(user.getId(), path);
     }
 
     @Operation(summary = "Delete resource")
@@ -64,9 +68,10 @@ public class ResourceController {
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(
+            @AuthenticationPrincipal CustomUserDetails user,
             @RequestParam("path") @SafePath String path
     ) {
-        resourceService.delete(path);
+        resourceService.delete(user.getId(), path);
     }
 
     @Operation(summary = "Download resource")
@@ -76,9 +81,10 @@ public class ResourceController {
     @ApiResponse(responseCode = "404", description = "Resource is not found")
     @GetMapping("/download")
     public ResponseEntity<InputStreamResource> download(
+            @AuthenticationPrincipal CustomUserDetails user,
             @RequestParam("path") @SafePath String path
     ) {
-        return resourceService.download(path);
+        return resourceService.download(user.getId(), path);
     }
 
     @Operation(summary = "Move resource: rename or move")
@@ -89,9 +95,10 @@ public class ResourceController {
     @ApiResponse(responseCode = "409", description = "Resource from path to already exists")
     @PostMapping("/move")
     public ResourceResponse move(
+            @AuthenticationPrincipal CustomUserDetails user,
             @RequestParam("from") @SafePath String fromPath, @RequestParam("to") @SafePath String toPath
     ) {
-        return resourceService.move(fromPath, toPath);
+        return resourceService.move(user.getId(), fromPath, toPath);
     }
 
     @Operation(summary = "Search resource")
@@ -100,8 +107,9 @@ public class ResourceController {
     @ApiResponse(responseCode = "401", description = "Unauthorized access")
     @GetMapping("/search")
     public List<ResourceResponse> search(
+            @AuthenticationPrincipal CustomUserDetails user,
             @RequestParam("query") String query
     ) {
-        return resourceService.search(query);
+        return resourceService.search(user.getId(), query);
     }
 }

@@ -1,6 +1,7 @@
 package com.jb.cloudstorage.cloud_storage.controller;
 
 import com.jb.cloudstorage.cloud_storage.dto.ResourceResponse;
+import com.jb.cloudstorage.cloud_storage.model.CustomUserDetails;
 import com.jb.cloudstorage.cloud_storage.service.ResourceService;
 import com.jb.cloudstorage.cloud_storage.util.SafePath;
 import io.swagger.v3.oas.annotations.Operation;
@@ -8,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,9 +35,10 @@ public class DirectoryController {
     @ApiResponse(responseCode = "404", description = "Resource is not found")
     @GetMapping
     public List<ResourceResponse> getDirectory(
+            @AuthenticationPrincipal CustomUserDetails user,
             @RequestParam("path") @SafePath String path
     ) {
-        return resourceService.getDirectory(path);
+        return resourceService.getDirectory(user.getId(), path);
     }
 
     @Operation(summary = "Create empty directory")
@@ -46,8 +49,9 @@ public class DirectoryController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ResourceResponse createDirectory(
+            @AuthenticationPrincipal CustomUserDetails user,
             @RequestParam("path") @SafePath String path
     ) {
-        return resourceService.createDirectory(path);
+        return resourceService.createDirectory(user.getId(), path);
     }
 }
