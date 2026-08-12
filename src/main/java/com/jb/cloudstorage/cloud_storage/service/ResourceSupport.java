@@ -13,7 +13,6 @@ import java.util.List;
 
 @RequiredArgsConstructor
 class ResourceSupport {
-    protected final UserRepository userRepository;
     protected final FileStorageService fileStorageService;
 
     void ensureNoCaseInsensitiveConflict(Long userId, String parentPath, String resourceName, ResourceType type) {

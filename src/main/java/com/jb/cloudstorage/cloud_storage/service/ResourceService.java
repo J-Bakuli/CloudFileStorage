@@ -25,8 +25,8 @@ import java.util.Set;
 
 @Service
 public class ResourceService extends ResourceSupport {
-    public ResourceService(UserRepository userRepository, FileStorageService fileStorageService) {
-        super(userRepository, fileStorageService);
+    public ResourceService(FileStorageService fileStorageService) {
+        super(fileStorageService);
     }
 
     public ResourceResponse get(Long userId, String fullPath) {
