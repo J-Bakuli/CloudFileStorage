@@ -36,11 +36,11 @@ class ResourceSupport {
                 continue;
             }
 
-            if (type == ResourceType.DIRECTORY) {
-                throw new ResourceAlreadyExistsException(String.format("Directory already exists, path=%s", resourceName));
-            }
-            throw new ResourceAlreadyExistsException(String.format("File already exists, path=%s", resourceName));
-        }
+            String conflictPath = type == ResourceType.DIRECTORY
+                    ? FileUtils.normalizeParentPath(FileUtils.joinPath(parentPath, resourceName))
+                    : FileUtils.joinPath(parentPath, resourceName);
+            throw new ResourceAlreadyExistsException(String.format("%s already exists, path=%s",
+                    type == ResourceType.DIRECTORY ? "Directory" : "File", conflictPath));        }
     }
 
     private boolean isSameResource(String relativePath, String excludedRelativePath) {
@@ -49,9 +49,10 @@ class ResourceSupport {
     }
 
     boolean resourceExists(Long userId, String resourcePath, ResourceType type) {
+        String storagePath = fileStorageService.resolveExistingFileStorageKey(userId, resourcePath);
         return type == ResourceType.FILE
-                ? fileStorageService.objectExists(userId, resourcePath)
-                : directoryExists(userId, resourcePath);
+                ? fileStorageService.objectExists(userId, storagePath)
+                : directoryExists(userId, storagePath);
     }
 
     boolean directoryExists(Long userId, String directoryPath) {
@@ -77,7 +78,10 @@ class ResourceSupport {
                         item -> {
                             String objectName = item.objectName();
                             String relativePath = FileUtils.getRelativePath(userId, objectName);
-                            FileUtils.PathParts parts = FileUtils.splitPath(relativePath);
+                            String apiPath = FileUtils.isStandaloneStoragePath(relativePath)
+                                    ? FileUtils.fromStandaloneStoragePath(relativePath)
+                                    : relativePath;
+                            FileUtils.PathParts parts = FileUtils.splitPath(apiPath);
                             ResourceType type = FileUtils.getResourceType(relativePath);
                             Long size = type == ResourceType.DIRECTORY ? null : item.size();
                             return new ResourceResponse(parts.parentPath(), parts.name(), size, type);
