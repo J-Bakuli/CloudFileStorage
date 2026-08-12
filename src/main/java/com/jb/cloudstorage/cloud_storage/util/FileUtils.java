@@ -5,7 +5,23 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class FileUtils {
+    private final String STANDALONE_FILE_SUFFIX = ".__standalone__";
     public record PathParts(String parentPath, String name, ResourceType type) {
+    }
+
+    public String toStandaloneStoragePath(String path) {
+        return isStandaloneStoragePath(path) ? path : path.concat(STANDALONE_FILE_SUFFIX);
+    }
+
+    public String fromStandaloneStoragePath(String storagePath) {
+        if (!isStandaloneStoragePath(storagePath)) {
+            return storagePath;
+        }
+        return storagePath.substring(0, storagePath.length() - STANDALONE_FILE_SUFFIX.length());
+    }
+
+    public boolean isStandaloneStoragePath(String path) {
+        return path != null && path.endsWith(STANDALONE_FILE_SUFFIX);
     }
 
     public String normalizeParentPath(String folderPath) {

@@ -45,7 +45,8 @@ public class FileStorageService {
                 userId, relativePath, file.getOriginalFilename(), file.getSize());
         try {
             String objectPath = FileUtils.joinPath(relativePath, file.getOriginalFilename());
-            String objectName = fullObjectName(userId, objectPath);
+            String storagePath = resolveFileStorageKey(userId, objectPath);
+            String objectName = fullObjectName(userId, storagePath);
             minioClient.putObject(PutObjectArgs.builder()
                     .bucket(minioProperties.bucket())
                     .object(objectName)
@@ -99,7 +100,8 @@ public class FileStorageService {
 
     public Long getObjectSize(Long userId, String fullPath) {
         log.debug("Getting object size for userId={}, path={}", userId, fullPath);
-        String objectName = fullObjectName(userId, fullPath);
+        String storagePath = resolveExistingFileStorageKey(userId, fullPath);
+        String objectName = fullObjectName(userId, storagePath);
         try {
             return minioClient.statObject(
                     StatObjectArgs.builder()
@@ -116,7 +118,8 @@ public class FileStorageService {
         ResourceType type = FileUtils.getResourceType(resourcePath);
         log.debug("Deleting resource for userId={}, path={}, type={}", userId, resourcePath, type);
         if (type == ResourceType.FILE) {
-            removeObject(fullObjectName(userId, resourcePath));
+            String storagePath = resolveExistingFileStorageKey(userId, resourcePath);
+            removeObject(fullObjectName(userId, storagePath));
             log.info("Deleted file for userId={}, path={}", userId, resourcePath);
         } else {
             deleteRecursively(userId, resourcePath);
@@ -124,7 +127,8 @@ public class FileStorageService {
     }
 
     public InputStreamResource download(Long userId, String resourcePath) {
-        String objectName = fullObjectName(userId, resourcePath);
+        String storagePath = resolveExistingFileStorageKey(userId, resourcePath);
+        String objectName = fullObjectName(userId, storagePath);
         log.debug("Downloading file for userId={}, objectName={}", userId, objectName);
         try {
             return new InputStreamResource(minioClient.getObject(GetObjectArgs.builder()
@@ -237,8 +241,13 @@ public class FileStorageService {
 
     private void copyObject(Long userId, String fromPath, String toPath) {
         try {
-            String fromObjectName = fullObjectName(userId, fromPath);
-            String toObjectName = fullObjectName(userId, toPath);
+            String fromStoragePath = FileUtils.getResourceType(fromPath) == ResourceType.FILE
+                    ? resolveExistingFileStorageKey(userId, fromPath) : fromPath;
+            String fromObjectName = fullObjectName(userId, fromStoragePath);
+            String toStoragePath = FileUtils.getResourceType(toPath) == ResourceType.FILE
+                    ? resolveFileStorageKey(userId, toPath) : toPath;
+            String toObjectName = fullObjectName(userId, toStoragePath);
+            log.info("To copyObject: fromObjectName={}, toObjectName={}", fromObjectName, toObjectName);
 
             minioClient.copyObject(CopyObjectArgs.builder()
                     .bucket(minioProperties.bucket())
@@ -329,5 +338,31 @@ public class FileStorageService {
         } catch (MinioException | IOException | NoSuchAlgorithmException | InvalidKeyException e) {
             throw new StorageException("Storage error", e);
         }
+    }
+
+    protected String resolveExistingFileStorageKey(Long userId, String filePath) {
+        String standalonePath = FileUtils.toStandaloneStoragePath(filePath);
+        if (objectExists(userId, standalonePath)) {
+            return standalonePath;
+        }
+        if (objectExists(userId, filePath)) {
+            return filePath;
+        }
+        return filePath;
+    }
+
+    protected String resolveFileStorageKey(Long userId, String filePath) {
+        if (directoryExistsAtSameName(userId, filePath)) {
+            return FileUtils.toStandaloneStoragePath(filePath);
+        }
+        return filePath;
+    }
+
+    private boolean directoryExistsAtSameName(Long userId, String filePath) {
+        FileUtils.PathParts parts = FileUtils.splitPath(filePath);
+        String dirPath = FileUtils.normalizeParentPath(
+                FileUtils.joinPath(parts.parentPath(), parts.name())
+        );
+        return objectExists(userId, dirPath) || !listObjects(userId, dirPath, false).isEmpty();
     }
 }

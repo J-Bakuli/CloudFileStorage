@@ -32,7 +32,7 @@ public class ResourceService extends ResourceSupport {
     public ResourceResponse get(Long userId, String fullPath) {
         FileUtils.PathParts pathParts = FileUtils.splitPath(fullPath);
 
-        if (!fileStorageService.objectExists(userId, fullPath)) {
+        if (!resourceExists(userId, fullPath, pathParts.type())) {
             throw new ResourceNotFoundException(String.format("Resource is not found, path=%s", fullPath));
         }
         Long size = pathParts.type() == ResourceType.FILE
@@ -76,9 +76,6 @@ public class ResourceService extends ResourceSupport {
                 throw new InvalidRequestException("Invalid filename");
             }
             String objectPath = FileUtils.joinPath(folderPath, filename);
-            if (fileStorageService.objectExists(userId, objectPath)) {
-                throw new ResourceAlreadyExistsException(String.format("File already exists, path=%s", objectPath));
-            }
             FileUtils.PathParts objectParts = FileUtils.splitPath(objectPath);
             ensureNoCaseInsensitiveConflict(userId, objectParts.parentPath(), objectParts.name(), ResourceType.FILE);
             String key = objectPath.toLowerCase(Locale.ROOT);
