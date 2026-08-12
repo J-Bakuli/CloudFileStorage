@@ -4,9 +4,9 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class ResourceNameValidator {
-    private static final String FORBIDDEN_SPECIAL_CHARS = ":*?\"<>|";
+    private final String FORBIDDEN_SPECIAL_CHARS = ":*?\"<>|";
 
-    public static boolean isSafeName(String s) {
+    public boolean isSafeName(String s) {
         if (s == null || s.isBlank()) {
             return false;
         }
@@ -18,7 +18,7 @@ public class ResourceNameValidator {
                 || s.contains("/"));
     }
 
-    public static boolean isSafeUploadFileName(String s) {
+    public boolean isSafeUploadFileName(String s) {
         if (s == null || s.isBlank()) {
             return false;
         }
@@ -38,7 +38,7 @@ public class ResourceNameValidator {
         return true;
     }
 
-    public static boolean containsForbiddenChars(String input) {
+    public boolean containsForbiddenChars(String input) {
         for (int i = 0; i < FORBIDDEN_SPECIAL_CHARS.length(); i++) {
             if (input.indexOf(FORBIDDEN_SPECIAL_CHARS.charAt(i)) >= 0) {
                 return true;

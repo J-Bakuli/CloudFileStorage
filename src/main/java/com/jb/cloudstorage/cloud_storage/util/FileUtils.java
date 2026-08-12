@@ -8,21 +8,21 @@ public class FileUtils {
     public record PathParts(String parentPath, String name, ResourceType type) {
     }
 
-    public static String normalizeParentPath(String folderPath) {
+    public String normalizeParentPath(String folderPath) {
         if (folderPath == null || folderPath.isBlank()) {
             return "";
         }
         return folderPath.endsWith("/") ? folderPath : folderPath + "/";
     }
 
-    public static String joinPath(String folderPath, String fileName) {
+    public String joinPath(String folderPath, String fileName) {
         if (folderPath == null || folderPath.isBlank()) {
             return fileName;
         }
         return normalizeParentPath(folderPath) + fileName;
     }
 
-    public static PathParts splitPath(String fullPath) {
+    public PathParts splitPath(String fullPath) {
         ResourceType resourceType = getResourceType(fullPath);
         String normalizedPath = removeTrailingSlash(fullPath);
         String resourceName = extractResourceName(normalizedPath);
@@ -30,11 +30,11 @@ public class FileUtils {
         return new PathParts(parentPath, resourceName, resourceType);
     }
 
-    public static ResourceType getResourceType(String fullPath) {
+    public ResourceType getResourceType(String fullPath) {
         return fullPath.endsWith("/") ? ResourceType.DIRECTORY : ResourceType.FILE;
     }
 
-    public static String getRelativePath(Long userId, String objectName) {
+    public String getRelativePath(Long userId, String objectName) {
         return objectName.substring(userRootPrefix(userId).length());
     }
 
