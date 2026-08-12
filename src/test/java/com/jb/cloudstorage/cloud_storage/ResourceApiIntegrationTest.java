@@ -1,6 +1,5 @@
 package com.jb.cloudstorage.cloud_storage;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -657,7 +656,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testCoexistence_file_rename_and_back_file_and_directory_areAccessible() throws Exception {
         prepareCoexistenceState();
         mockMvc.perform(
@@ -686,7 +684,6 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testCoexistence_directory_move_and_back_file_and_directory_areAccessible() throws Exception {
         prepareCoexistenceState();
         mockMvc.perform(
