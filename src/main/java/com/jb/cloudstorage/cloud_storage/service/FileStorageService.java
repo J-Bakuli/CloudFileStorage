@@ -36,11 +36,11 @@ import java.util.zip.ZipOutputStream;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class FileStorageService {
+class FileStorageService {
     private final MinioProperties minioProperties;
     private final MinioClient minioClient;
 
-    public void uploadFile(Long userId, String relativePath, MultipartFile file) {
+    void uploadFile(Long userId, String relativePath, MultipartFile file) {
         log.debug("Uploading file for userId={}, relativePath={}, filename={}, size={}",
                 userId, relativePath, file.getOriginalFilename(), file.getSize());
         try {
@@ -59,7 +59,7 @@ public class FileStorageService {
         }
     }
 
-    public void createDirectory(Long userId, String folderPath) {
+    void createDirectory(Long userId, String folderPath) {
         log.debug("Creating directory for userId={}, folderPath={}", userId, folderPath);
         try {
             minioClient.putObject(PutObjectArgs.builder()
@@ -74,7 +74,7 @@ public class FileStorageService {
         }
     }
 
-    public boolean objectExists(Long userId, String directoryPath) {
+    boolean objectExists(Long userId, String directoryPath) {
         log.debug("Checking object existence for userId={}, path={}", userId, directoryPath);
         try {
             minioClient.statObject(
@@ -98,7 +98,7 @@ public class FileStorageService {
         }
     }
 
-    public Long getObjectSize(Long userId, String fullPath) {
+    Long getObjectSize(Long userId, String fullPath) {
         log.debug("Getting object size for userId={}, path={}", userId, fullPath);
         String storagePath = resolveExistingFileStorageKey(userId, fullPath);
         String objectName = fullObjectName(userId, storagePath);
@@ -114,7 +114,7 @@ public class FileStorageService {
         }
     }
 
-    public void delete(Long userId, String resourcePath) {
+    void delete(Long userId, String resourcePath) {
         ResourceType type = FileUtils.getResourceType(resourcePath);
         log.debug("Deleting resource for userId={}, path={}, type={}", userId, resourcePath, type);
         if (type == ResourceType.FILE) {
@@ -126,7 +126,7 @@ public class FileStorageService {
         }
     }
 
-    public InputStreamResource download(Long userId, String resourcePath) {
+    InputStreamResource download(Long userId, String resourcePath) {
         String storagePath = resolveExistingFileStorageKey(userId, resourcePath);
         String objectName = fullObjectName(userId, storagePath);
         log.debug("Downloading file for userId={}, objectName={}", userId, objectName);
@@ -140,7 +140,7 @@ public class FileStorageService {
         }
     }
 
-    public InputStreamResource downloadDirectoryAsZip(Long userId, String resourcePath) {
+    InputStreamResource downloadDirectoryAsZip(Long userId, String resourcePath) {
         log.debug("Downloading directory as zip for userId={}, path={}", userId, resourcePath);
 
         List<Item> results = listObjects(userId, resourcePath, true);
@@ -178,28 +178,28 @@ public class FileStorageService {
         return new InputStreamResource(new ByteArrayInputStream(outputStream.toByteArray()));
     }
 
-    public void moveFile(Long userId, String fromPath, String toPath) {
+    void moveFile(Long userId, String fromPath, String toPath) {
         log.debug("Move file for userId={}, fromPath={}, toPath={}", userId, fromPath, toPath);
         copyObject(userId, fromPath, toPath);
         delete(userId, fromPath);
         log.info("Moved file for userId={}, fromPath={}, toPath={}", userId, fromPath, toPath);
     }
 
-    public void moveDirectory(Long userId, String fromPath, String toPath) {
+    void moveDirectory(Long userId, String fromPath, String toPath) {
         log.debug("Move directory for userId={}, fromPath={}, toPath={}", userId, fromPath, toPath);
         copyObjectRecursively(userId, fromPath, toPath);
         deleteRecursively(userId, fromPath);
         log.info("Moved directory for userId={}, fromPath={}, toPath={}", userId, fromPath, toPath);
     }
 
-    public List<Item> search(Long userId, String query) {
+    List<Item> search(Long userId, String query) {
         log.debug("Search files for userId={}, query={}", userId, query);
         List<Item> items = listObjects(userId, "", true);
         log.info("Search is completed for userId={}, query={}", userId, query);
         return filter(userId, query, items);
     }
 
-    public List<Item> listObjects(Long userId, String directoryPath, boolean isRecursive) {
+    List<Item> listObjects(Long userId, String directoryPath, boolean isRecursive) {
         log.debug("Listing objects for userId={}, directoryPath={}", userId, directoryPath);
         try {
             String prefix = buildUserObjectPrefix(userId, directoryPath);
@@ -340,7 +340,7 @@ public class FileStorageService {
         }
     }
 
-    protected String resolveExistingFileStorageKey(Long userId, String filePath) {
+    String resolveExistingFileStorageKey(Long userId, String filePath) {
         String standalonePath = FileUtils.toStandaloneStoragePath(filePath);
         if (objectExists(userId, standalonePath)) {
             return standalonePath;
@@ -351,7 +351,7 @@ public class FileStorageService {
         return filePath;
     }
 
-    protected String resolveFileStorageKey(Long userId, String filePath) {
+    private String resolveFileStorageKey(Long userId, String filePath) {
         if (directoryExistsAtSameName(userId, filePath)) {
             return FileUtils.toStandaloneStoragePath(filePath);
         }
