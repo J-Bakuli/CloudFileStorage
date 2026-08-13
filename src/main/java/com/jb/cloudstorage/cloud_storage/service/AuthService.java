@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -40,8 +41,11 @@ public class AuthService {
         }
 
         UserEntity newUserEntity = new UserEntity(username, passwordEncoder.encode(signUpRequest.password()));
-        userRepository.save(newUserEntity);
-
+        try {
+            userRepository.save(newUserEntity);
+        } catch (DataIntegrityViolationException e) {
+            throw new UsernameAlreadyExistsException(String.format("Username %s already exists, please create another one", username), e);
+        }
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         username,
