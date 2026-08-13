@@ -13,7 +13,7 @@ import java.util.List;
 
 @RequiredArgsConstructor
 class ResourceSupport {
-    protected final FileStorageService fileStorageService;
+    final FileStorageService fileStorageService;
 
     void ensureNoCaseInsensitiveConflict(Long userId, String parentPath, String resourceName, ResourceType type) {
         ensureNoCaseInsensitiveConflict(userId, parentPath, resourceName, type, null);
@@ -54,7 +54,7 @@ class ResourceSupport {
                 : directoryExists(userId, storagePath);
     }
 
-    boolean directoryExists(Long userId, String directoryPath) {
+    private boolean directoryExists(Long userId, String directoryPath) {
         String path = FileUtils.normalizeParentPath(directoryPath);
         return fileStorageService.objectExists(userId, path)
                 || !fileStorageService.listObjects(userId, path, false).isEmpty();
