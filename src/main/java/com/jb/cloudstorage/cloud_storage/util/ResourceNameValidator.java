@@ -6,7 +6,7 @@ import lombok.experimental.UtilityClass;
 public class ResourceNameValidator {
     private final String FORBIDDEN_SPECIAL_CHARS = ":*?\"<>|";
 
-    public boolean isSafeName(String s) {
+    private boolean isSafeName(String s) {
         if (s == null || s.isBlank()) {
             return false;
         }
@@ -38,7 +38,7 @@ public class ResourceNameValidator {
         return true;
     }
 
-    public boolean containsForbiddenChars(String input) {
+    boolean containsForbiddenChars(String input) {
         for (int i = 0; i < FORBIDDEN_SPECIAL_CHARS.length(); i++) {
             if (input.indexOf(FORBIDDEN_SPECIAL_CHARS.charAt(i)) >= 0) {
                 return true;
