@@ -22,6 +22,7 @@ public class UserEntity {
     private Long id;
     @Column(nullable = false, unique = true, length = 20)
     private String username;
+    @Column(nullable = false, length = 255)
     private String password;
 
     public UserEntity(String username, String password) {
