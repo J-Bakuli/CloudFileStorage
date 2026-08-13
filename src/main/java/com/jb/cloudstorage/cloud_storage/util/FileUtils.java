@@ -5,6 +5,7 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class FileUtils {
+    private final String USER_ROOT_PREFIX_FORMAT = "user-%d-files/";
     private final String STANDALONE_FILE_SUFFIX = ".__standalone__";
     public record PathParts(String parentPath, String name, ResourceType type) {
     }
@@ -55,7 +56,7 @@ public class FileUtils {
     }
 
     public String userRootPrefix(Long userId) {
-        return "user-" + userId + "-files/";
+        return String.format(USER_ROOT_PREFIX_FORMAT, userId);
     }
 
     private String removeTrailingSlash(String fullPath) {
