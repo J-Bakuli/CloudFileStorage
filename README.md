@@ -43,7 +43,7 @@ MINIO_ROOT_USER=your_minio_user
 MINIO_ROOT_PASSWORD=your_minio_password
 ```
 
-Create `src/main/resources/application-local.properties` manually after clone (file is in `.gitignore`):
+Create `application-local.properties` in the project root after clone (file is in `.gitignore`, keep it out of `src/main/resources` so it is not packaged into the jar). For tests, create `application-test-local.properties` in the project root the same way.
 
 ```properties
 spring.datasource.url=jdbc:postgresql://localhost:5433/cloud_storage
