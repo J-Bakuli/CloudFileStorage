@@ -114,16 +114,9 @@ public class GlobalExceptionHandler {
         List<ApiFieldError> errors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .findFirst()
-                .map(err -> List.of(new ApiFieldError(err.getField(), err.getDefaultMessage())))
-                .orElse(List.of());
-        if (!errors.isEmpty()) {
-            ApiFieldError fieldError = errors.get(0);
-            log.debug("Validation failed: uri={}, field={}, message={}",
-                    request.getRequestURI(), fieldError.field(), fieldError.message());
-        } else {
-            log.debug("Validation failed: uri={}", request.getRequestURI());
-        }
+                .map(err -> new ApiFieldError(err.getField(), err.getDefaultMessage()))
+                .toList();
+        log.debug("Validation failed: uri={}, errors={}", request.getRequestURI(), errors);
         return jsonError(
                 HttpStatus.BAD_REQUEST,
                 "Validation failed",
