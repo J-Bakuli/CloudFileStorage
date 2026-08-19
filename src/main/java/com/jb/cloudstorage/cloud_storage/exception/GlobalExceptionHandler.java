@@ -39,7 +39,7 @@ public class GlobalExceptionHandler {
         log.debug("Constraint violation request: uri={}, message={}", request.getRequestURI(), ex.getMessage());
         return jsonError(
                 HttpStatus.BAD_REQUEST,
-                "Invalid path",
+                "Invalid request",
                 request.getRequestURI(),
                 errors);
     }

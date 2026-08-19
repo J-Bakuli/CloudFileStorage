@@ -749,7 +749,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                                 .param("query", "")
                                 .session(session))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", containsString("Invalid path")))
+                .andExpect(jsonPath("$.message", containsString("Invalid request")))
                 .andExpect(jsonPath("$.errors[*].message", hasItem("Query is empty")));
     }
 

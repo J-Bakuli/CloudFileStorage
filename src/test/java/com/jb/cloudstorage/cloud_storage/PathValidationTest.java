@@ -5,6 +5,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -28,7 +29,8 @@ public class PathValidationTest extends BaseApiIntegrationTest {
                                 .param("path", path)
                                 .session(session))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", containsString("Invalid path")));
+                .andExpect(jsonPath("$.message", containsString("Invalid request")))
+                .andExpect(jsonPath("$.errors[*].message", hasItem("Invalid path")));
     }
 
     @Test
@@ -41,7 +43,8 @@ public class PathValidationTest extends BaseApiIntegrationTest {
                                 .param("path", invalidPath)
                                 .session(session))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", containsString("Invalid path")));
+                .andExpect(jsonPath("$.message", containsString("Invalid request")))
+                .andExpect(jsonPath("$.errors[*].message", hasItem("Invalid path")));
 
         mockMvc.perform(
                         post("/api/resource/move")
@@ -49,7 +52,8 @@ public class PathValidationTest extends BaseApiIntegrationTest {
                                 .param("to", "stolen.txt")
                                 .session(session))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", containsString("Invalid path")));
+                .andExpect(jsonPath("$.message", containsString("Invalid request")))
+                .andExpect(jsonPath("$.errors[*].message", hasItem("Invalid path")));
 
         mockMvc.perform(
                         post("/api/resource/move")
@@ -57,14 +61,16 @@ public class PathValidationTest extends BaseApiIntegrationTest {
                                 .param("to", invalidPath)
                                 .session(session))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", containsString("Invalid path")));
+                .andExpect(jsonPath("$.message", containsString("Invalid request")))
+                .andExpect(jsonPath("$.errors[*].message", hasItem("Invalid path")));
 
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "../user-1-files/secret/")
                                 .session(session))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", containsString("Invalid path")));
+                .andExpect(jsonPath("$.message", containsString("Invalid request")))
+                .andExpect(jsonPath("$.errors[*].message", hasItem("Invalid path")));
     }
 
     @ParameterizedTest
@@ -84,7 +90,8 @@ public class PathValidationTest extends BaseApiIntegrationTest {
                                 .session(session))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value("Invalid path"));
+                .andExpect(jsonPath("$.message").value("Invalid request"))
+                .andExpect(jsonPath("$.errors[*].message", hasItem("Invalid path")));
     }
 
     @ParameterizedTest
@@ -104,6 +111,7 @@ public class PathValidationTest extends BaseApiIntegrationTest {
                                 .param("to", path)
                                 .session(session))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", containsString("Invalid path")));
+                .andExpect(jsonPath("$.message", containsString("Invalid request")))
+                .andExpect(jsonPath("$.errors[*].message", hasItem("Invalid path")));
     }
 }

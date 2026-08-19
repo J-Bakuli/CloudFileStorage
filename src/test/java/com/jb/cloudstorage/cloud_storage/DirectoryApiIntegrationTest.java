@@ -7,6 +7,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -62,7 +63,8 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                                 .param("path", "/")
                                 .session(session))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Invalid path"));
+                .andExpect(jsonPath("$.message").value("Invalid request"))
+                .andExpect(jsonPath("$.errors[*].message", hasItem("Invalid path")));
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "")
