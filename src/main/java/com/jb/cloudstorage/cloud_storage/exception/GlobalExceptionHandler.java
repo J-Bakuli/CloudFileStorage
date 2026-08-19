@@ -101,7 +101,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(StorageException.class)
     public ResponseEntity<ApiErrorResponse> handleStorageException(StorageException ex, HttpServletRequest request) {
-        log.error("Storage exception: uri={}, message={}", request.getRequestURI(), ex.getMessage());
+        log.error("Storage exception: uri={}", request.getRequestURI(), ex);
         return jsonError(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Storage error",
