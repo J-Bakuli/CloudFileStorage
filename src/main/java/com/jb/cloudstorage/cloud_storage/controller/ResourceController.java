@@ -7,6 +7,7 @@ import com.jb.cloudstorage.cloud_storage.util.SafePath;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
@@ -108,7 +109,7 @@ public class ResourceController {
     @GetMapping("/search")
     public List<ResourceResponse> search(
             @AuthenticationPrincipal CustomUserDetails user,
-            @RequestParam("query") String query
+            @RequestParam("query") @NotBlank(message = "Query is empty") String query
     ) {
         return resourceService.search(user.getId(), query);
     }

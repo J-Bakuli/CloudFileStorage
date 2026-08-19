@@ -5,6 +5,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -748,7 +749,8 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                                 .param("query", "")
                                 .session(session))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", containsString("Query is empty")));
+                .andExpect(jsonPath("$.message", containsString("Invalid path")))
+                .andExpect(jsonPath("$.errors[*].message", hasItem("Query is empty")));
     }
 
     @Test

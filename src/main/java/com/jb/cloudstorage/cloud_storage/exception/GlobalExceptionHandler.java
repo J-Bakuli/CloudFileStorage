@@ -32,12 +32,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiErrorResponse> handleConstraintViolationException(ConstraintViolationException ex, HttpServletRequest request) {
+        List<ApiFieldError> errors = ex.getConstraintViolations()
+                .stream()
+                .map(err -> new ApiFieldError(err.getPropertyPath().toString(), err.getMessage()))
+                .toList();
         log.debug("Constraint violation request: uri={}, message={}", request.getRequestURI(), ex.getMessage());
         return jsonError(
                 HttpStatus.BAD_REQUEST,
                 "Invalid path",
                 request.getRequestURI(),
-                List.of());
+                errors);
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
