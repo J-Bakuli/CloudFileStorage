@@ -212,7 +212,7 @@ public class ResourceService extends ResourceSupport {
     }
 
     public List<ResourceResponse> search(Long userId, String query) {
-        if (query.trim().isBlank()) {
+        if (query == null || query.isBlank()) {
             throw new InvalidRequestException("Query is empty");
         }
         List<Item> items = fileStorageService.search(userId, query);
