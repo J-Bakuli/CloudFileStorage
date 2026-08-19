@@ -43,6 +43,7 @@ public class DirectoryController {
 
     @Operation(summary = "Create empty directory")
     @ApiResponse(responseCode = "201", description = "Directory is created")
+    @ApiResponse(responseCode = "400", description = "Invalid or missing path")
     @ApiResponse(responseCode = "409", description = "Directory already exists")
     @ApiResponse(responseCode = "401", description = "Unauthorized access")
     @ApiResponse(responseCode = "404", description = "Parent path does not exist")
