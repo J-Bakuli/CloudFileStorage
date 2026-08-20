@@ -46,7 +46,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ApiErrorResponse> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex, HttpServletRequest request) {
-        log.debug("Max upload size exceeded: uri={}, message={}", request.getRequestURI(), ex.getMessage());
+        log.warn("Max upload size exceeded: uri={}, message={}", request.getRequestURI(), ex.getMessage());
         return jsonError(
                 HttpStatus.PAYLOAD_TOO_LARGE,
                 "Multipart request is too large",
@@ -65,7 +65,7 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(UsernameAlreadyExistsException.class)
     public ResponseEntity<ApiErrorResponse> handleUsernameAlreadyExistsException(UsernameAlreadyExistsException ex, HttpServletRequest request) {
-        log.debug("Username conflict: uri={}, message={}", request.getRequestURI(), ex.getMessage());
+        log.warn("Username conflict: uri={}, message={}", request.getRequestURI(), ex.getMessage());
         return jsonError(
                 HttpStatus.CONFLICT,
                 ex.getMessage(),
@@ -75,7 +75,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceAlreadyExistsException.class)
     public ResponseEntity<ApiErrorResponse> handleResourceAlreadyExistsException(ResourceAlreadyExistsException ex, HttpServletRequest request) {
-        log.debug("Resource conflict: uri={}, message={}", request.getRequestURI(), ex.getMessage());
+        log.warn("Resource conflict: uri={}, message={}", request.getRequestURI(), ex.getMessage());
         return jsonError(
                 HttpStatus.CONFLICT,
                 ex.getMessage(),
