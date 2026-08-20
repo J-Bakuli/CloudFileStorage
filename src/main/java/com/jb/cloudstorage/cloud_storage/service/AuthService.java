@@ -35,9 +35,8 @@ public class AuthService {
     @Transactional
     public UserResponse register(SignUpRequest signUpRequest, HttpServletRequest request, HttpServletResponse response) {
         String username = signUpRequest.username().trim();
-        UserEntity userEntity = userRepository.findByUsername(username);
 
-        if (userEntity != null) {
+        if (userRepository.findByUsername(username).isPresent()) {
             throw new UsernameAlreadyExistsException(String.format("Username %s already exists, please create another one", username));
         }
 

@@ -14,6 +14,8 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Optional;
+
 public class AuthServiceIntegrationTest extends BaseApiIntegrationTest {
     @Autowired
     private AuthService authService;
@@ -34,10 +36,10 @@ public class AuthServiceIntegrationTest extends BaseApiIntegrationTest {
     void testSignUp_savesUserWithEncodedPassword() {
         SignUpRequest signUpRequest = new SignUpRequest(BASIC_USERNAME, BASIC_PASSWORD);
         UserResponse userResponse = authService.register(signUpRequest, mockRequest, mockResponse);
-        UserEntity user = userRepository.findByUsername(BASIC_USERNAME);
-
-        Assertions.assertNotNull(user);
-        Assertions.assertTrue(passwordEncoder.matches(BASIC_PASSWORD, user.getPassword()));
+        Optional<UserEntity> userOpt = userRepository.findByUsername(BASIC_USERNAME);
+        Assertions.assertTrue(userOpt.isPresent());
+        Assertions.assertNotNull(userOpt.get());
+        Assertions.assertTrue(passwordEncoder.matches(BASIC_PASSWORD, userOpt.get().getPassword()));
         Assertions.assertEquals(BASIC_USERNAME, userResponse.username());
     }
 
