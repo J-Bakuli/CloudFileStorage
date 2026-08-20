@@ -18,6 +18,15 @@ Multi-user cloud file storage (upload, download, manage files and folders). Prot
 | One multipart request (e.g. folder upload) | up to **500 MB** |
 | Parts per request | up to **1000** files |
 
+MinIO is an S3 **object store** (not a filesystem/DB): no multi-object transactions, no atomic folder rename. A directory is a key prefix; move is copy-then-delete.
+
+Not atomic in this prototype:
+
+- **Directory move/copy** — a failed copy can leave objects at the destination; the source is deleted only after copy succeeds.
+- **Batch upload** — already written files stay if a later file fails.
+
+The API returns **500** (or **409**). There is no rollback.
+
 ## Swagger
 
 UI: `/swagger-ui/index.html`  
