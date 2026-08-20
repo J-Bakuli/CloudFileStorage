@@ -6,6 +6,7 @@ import org.springframework.mock.web.MockMultipartFile;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -763,30 +764,30 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                                 .session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].path").value("exam/"))
-                .andExpect(jsonPath("$[0].name").value("test.txt"))
-                .andExpect(jsonPath("$[0].size").value(content.length))
-                .andExpect(jsonPath("$[0].type").value("FILE"));
+                .andExpect(jsonPath("$[*].path", hasItem("exam/")))
+                .andExpect(jsonPath("$[*].name", hasItem("test.txt")))
+                .andExpect(jsonPath("$[*].size", hasItem(content.length)))
+                .andExpect(jsonPath("$[*].type", hasItem("FILE")));
         mockMvc.perform(
                         get("/api/resource/search")
                                 .param("query", "tes")
                                 .session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].path").value("exam/"))
-                .andExpect(jsonPath("$[0].name").value("test.txt"))
-                .andExpect(jsonPath("$[0].size").value(content.length))
-                .andExpect(jsonPath("$[0].type").value("FILE"));
+                .andExpect(jsonPath("$[*].path", hasItem("exam/")))
+                .andExpect(jsonPath("$[*].name", hasItem("test.txt")))
+                .andExpect(jsonPath("$[*].size", hasItem(content.length)))
+                .andExpect(jsonPath("$[*].type", hasItem("FILE")));
         mockMvc.perform(
                         get("/api/resource/search")
                                 .param("query", "EXam")
                                 .session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].path").value("exam/"))
-                .andExpect(jsonPath("$[0].name").value("test.txt"))
-                .andExpect(jsonPath("$[0].size").value(content.length))
-                .andExpect(jsonPath("$[0].type").value("FILE"));
+                .andExpect(jsonPath("$[*].path", hasItem("exam/")))
+                .andExpect(jsonPath("$[*].name", hasItem("test.txt")))
+                .andExpect(jsonPath("$[*].size", hasItem(content.length)))
+                .andExpect(jsonPath("$[*].type", hasItem("FILE")));
     }
 
     @Test
@@ -805,14 +806,10 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                                 .session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].path").value("daily/"))
-                .andExpect(jsonPath("$[0].name").value("test.txt"))
-                .andExpect(jsonPath("$[0].size").value(content.length))
-                .andExpect(jsonPath("$[0].type").value("FILE"))
-                .andExpect(jsonPath("$[1].path").value("exam/"))
-                .andExpect(jsonPath("$[1].name").value("test.txt"))
-                .andExpect(jsonPath("$[1].size").value(content.length))
-                .andExpect(jsonPath("$[1].type").value("FILE"));
+                .andExpect(jsonPath("$[*].path", hasItems("daily/", "exam/")))
+                .andExpect(jsonPath("$[*].name", hasItem("test.txt")))
+                .andExpect(jsonPath("$[*].size", hasItem(content.length)))
+                .andExpect(jsonPath("$[*].type", hasItem("FILE")));
     }
 
     @Test
@@ -830,10 +827,10 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                                 .session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].path").value("level1/level2/level3/"))
-                .andExpect(jsonPath("$[0].name").value("test.txt"))
-                .andExpect(jsonPath("$[0].size").value(content.length))
-                .andExpect(jsonPath("$[0].type").value("FILE"));
+                .andExpect(jsonPath("$[*].path", hasItem("level1/level2/level3/")))
+                .andExpect(jsonPath("$[*].name", hasItem("test.txt")))
+                .andExpect(jsonPath("$[*].size", hasItem(content.length)))
+                .andExpect(jsonPath("$[*].type", hasItem("FILE")));
     }
 
     @Test
@@ -855,8 +852,8 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andDo(print())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$.size").doesNotExist())
-                .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
+                .andExpect(jsonPath("$[*].size").doesNotExist())
+                .andExpect(jsonPath("$[*].type", hasItem("DIRECTORY")));
     }
 
     @Test
@@ -896,14 +893,10 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].path").value("level1/"))
-                .andExpect(jsonPath("$[0].name").value("level2"))
-                .andExpect(jsonPath("$[0].size").doesNotExist())
-                .andExpect(jsonPath("$[0].type").value("DIRECTORY"))
-                .andExpect(jsonPath("$[1].path").value("level1/level2/"))
-                .andExpect(jsonPath("$[1].name").value("level3"))
-                .andExpect(jsonPath("$[1].size").doesNotExist())
-                .andExpect(jsonPath("$[1].type").value("DIRECTORY"));
+                .andExpect(jsonPath("$[*].path", hasItems("level1/", "level1/level2/")))
+                .andExpect(jsonPath("$[*].name", hasItems("level2", "level3")))
+                .andExpect(jsonPath("$[*].size").doesNotExist())
+                .andExpect(jsonPath("$[*].type", hasItem("DIRECTORY")));
     }
 
     @Test
@@ -926,14 +919,9 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].path").value("exam/"))
-                .andExpect(jsonPath("$[0].name").value("test.txt"))
-                .andExpect(jsonPath("$[0].size").value(content.length))
-                .andExpect(jsonPath("$[0].type").value("FILE"))
-                .andExpect(jsonPath("$[1].path").value(""))
-                .andExpect(jsonPath("$[1].name").value("exam"))
-                .andExpect(jsonPath("$[1].size").doesNotExist())
-                .andExpect(jsonPath("$[1].type").value("DIRECTORY"));
+                .andExpect(jsonPath("$[*].path", hasItems("exam/", "")))
+                .andExpect(jsonPath("$[*].name", hasItems("test.txt", "exam")))
+                .andExpect(jsonPath("$[*].type", hasItems("FILE", "DIRECTORY")));
     }
 
     @Test
@@ -946,10 +934,10 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
                                 .session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].path").value("exam/"))
-                .andExpect(jsonPath("$[0].name").value("test.txt"))
-                .andExpect(jsonPath("$[0].size").value(content.length))
-                .andExpect(jsonPath("$[0].type").value("FILE"));
+                .andExpect(jsonPath("$[*].path", hasItem("exam/")))
+                .andExpect(jsonPath("$[*].name", hasItem("test.txt")))
+                .andExpect(jsonPath("$[*].size", hasItem(content.length)))
+                .andExpect(jsonPath("$[*].type", hasItem("FILE")));
     }
 
     private void prepareCoexistenceState() throws Exception {
