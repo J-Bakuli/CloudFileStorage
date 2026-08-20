@@ -27,6 +27,8 @@ Not atomic in this prototype:
 
 The API returns **500** (or **409**). There is no rollback.
 
+**Download directory as zip** is built fully in memory (not streamed to the response). Fine for this prototype; large folders can use a lot of RAM.
+
 ## Swagger
 
 UI: `/swagger-ui/index.html`  
