@@ -15,7 +15,7 @@ public record SignInRequest(
         @NotBlank
         @Size(min = 5, max = 20, message = "Password must contain from 5 to 20 characters")
         @Pattern(
-                regexp = "^[a-zA-Z0-9!@#$%^&*(),.?\":{}|<>\\[\\]\\/`~+=\\-_';]*$",
+                regexp = "^[a-zA-Z0-9!@#$%^&*(),.?\":{}|<>\\[\\]\\/`~+=\\-_';]+$",
                 message = "Password contains invalid characters"
         )
         String password) {
