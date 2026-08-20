@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -61,22 +62,19 @@ public class AuthService {
 
     public UserResponse login(SignInRequest signInRequest, HttpServletRequest request, HttpServletResponse response) {
         String username = signInRequest.username().trim();
-        UserEntity userEntity = userRepository.findByUsername(username);
-
-        if (userEntity == null || !passwordEncoder.matches(signInRequest.password(), userEntity.getPassword())) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            username,
+                            signInRequest.password()
+                    )
+            );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        securityContextRepository.saveContext(SecurityContextHolder.getContext(), request, response);
+        } catch (BadCredentialsException e) {
             log.warn("Sign-in failed for username={}", username);
             throw new InvalidCredentialsException("Invalid username or password");
         }
-
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        username,
-                        signInRequest.password()
-                )
-        );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        securityContextRepository.saveContext(SecurityContextHolder.getContext(), request, response);
-
         log.info("Successful sign-in with username={}", username);
         return new UserResponse(username);
     }
