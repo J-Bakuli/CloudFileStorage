@@ -197,7 +197,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/directory")
-                                .param("path", "projects/ NEWdir /")
+                                .param("path", "projects/NEWdir/")
                                 .session(session))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("already exists")));
@@ -383,7 +383,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         post("/api/resource/move")
                                 .param("from", "dir/")
-                                .param("to", " NEWDIR /")
+                                .param("to", "NEWDIR/")
                                 .session(session))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("already exists")));

@@ -20,7 +20,9 @@ public class PathValidationTest extends BaseApiIntegrationTest {
             "/main.txt",
             "folder:name/",
             "a*b.txt",
-            "x|y.txt"
+            "x|y.txt",
+            " exam.txt",
+            "exam/ file.txt"
     })
     void testGetResource_invalidPaths(String path) throws Exception {
         basicSignUp();
@@ -80,7 +82,9 @@ public class PathValidationTest extends BaseApiIntegrationTest {
             "folder\\x",
             "folder:name/",
             "a*b.txt",
-            "x|y.txt"
+            "x|y.txt",
+            " exam/",
+            "exam /"
     })
     void testCreateDirectory_invalid_path(String path) throws Exception {
         basicSignUp();

@@ -10,7 +10,7 @@ public class ResourceNameValidator {
         if (s == null || s.isBlank()) {
             return false;
         }
-        if (containsForbiddenChars(s)) {
+        if (hasLeadingOrTrailingWhitespace(s) || containsForbiddenChars(s)) {
             return false;
         }
         return !(s.contains("..")
@@ -48,10 +48,19 @@ public class ResourceNameValidator {
         if (containsForbiddenChars(value)) {
             return false;
         }
+        for (String segment : value.split("/")) {
+            if (!segment.isEmpty() && hasLeadingOrTrailingWhitespace(segment)) {
+                return false;
+            }
+        }
         return !(value.contains("..")
                 || value.contains("\\")
                 || value.contains("//")
                 || value.startsWith("/"));
+    }
+
+    private boolean hasLeadingOrTrailingWhitespace(String s) {
+        return !s.equals(s.trim());
     }
 
     private boolean containsForbiddenChars(String input) {

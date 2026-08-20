@@ -23,7 +23,9 @@ public class ResourceNameValidationTest extends BaseApiIntegrationTest {
             "file\"name.txt",
             "file<name.txt",
             "file>name.txt",
-            "file|name.txt"
+            "file|name.txt",
+            " file.txt",
+            "file.txt "
     })
     void testUploadResource_invalid_fileName(String fileName) throws Exception {
         basicSignUp();
