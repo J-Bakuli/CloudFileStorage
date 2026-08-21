@@ -35,7 +35,7 @@ public class ResourceController {
     private final ResourceService resourceService;
 
     @Operation(summary = "Upload object into the app")
-    @ApiResponse(responseCode = "400", description = "Invalid request body")
+    @ApiResponse(responseCode = "400", description = "Invalid request body or parent path without trailing /")
     @ApiResponse(responseCode = "401", description = "Unauthorized access")
     @ApiResponse(responseCode = "409", description = "File already exists")
     @ResponseStatus(HttpStatus.CREATED)

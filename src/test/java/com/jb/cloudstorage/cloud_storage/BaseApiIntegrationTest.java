@@ -77,7 +77,7 @@ public abstract class BaseApiIntegrationTest {
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
-                                .param("path", "exam")
+                                .param("path", "exam/")
                                 .session(session))
                 .andExpect(status().isCreated());
     }

@@ -61,6 +61,10 @@ public class ResourceService extends ResourceSupport {
     }
 
     public List<ResourceResponse> upload(Long userId, String folderPath, List<MultipartFile> objects) {
+        if (!folderPath.isBlank() && !folderPath.endsWith("/")) {
+            throw new InvalidRequestException(String.format("Directory path must end with /, path=%s", folderPath));
+        }
+
         List<ResourceResponse> response = new ArrayList<>();
         Set<String> uploadedNames = new HashSet<>();
 

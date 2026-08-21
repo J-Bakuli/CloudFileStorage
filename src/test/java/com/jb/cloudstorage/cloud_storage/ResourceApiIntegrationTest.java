@@ -53,6 +53,18 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
     }
 
     @Test
+    void testUpload_parentPathMustEndWithSlash() throws Exception {
+        basicSignUp();
+        mockMvc.perform(
+                        multipart("/api/resource")
+                                .file(file)
+                                .param("path", "exam")
+                                .session(session))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Directory path must end with /")));
+    }
+
+    @Test
     void testUpload_nullFilename() throws Exception {
         basicSignUp();
         MockMultipartFile fileWithoutName = new MockMultipartFile(
@@ -436,7 +448,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
-                                .param("path", "test")
+                                .param("path", "test/")
                                 .session(session))
                 .andExpect(status().isCreated());
         mockMvc.perform(
@@ -500,7 +512,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
-                                .param("path", "test")
+                                .param("path", "test/")
                                 .session(session))
                 .andExpect(status().isCreated());
         mockMvc.perform(
@@ -519,7 +531,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
-                                .param("path", "daily")
+                                .param("path", "daily/")
                                 .session(session))
                 .andExpect(status().isCreated());
         mockMvc.perform(
@@ -549,7 +561,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
-                                .param("path", "other")
+                                .param("path", "other/")
                                 .session(session))
                 .andExpect(status().isCreated());
         mockMvc.perform(
@@ -797,7 +809,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
-                                .param("path", "daily")
+                                .param("path", "daily/")
                                 .session(session))
                 .andExpect(status().isCreated());
         mockMvc.perform(
@@ -818,7 +830,7 @@ public class ResourceApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
-                                .param("path", "level1/level2/level3")
+                                .param("path", "level1/level2/level3/")
                                 .session(session))
                 .andExpect(status().isCreated());
         mockMvc.perform(

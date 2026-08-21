@@ -516,7 +516,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
-                                .param("path", "dir")
+                                .param("path", "dir/")
                                 .session(session))
                 .andExpect(status().isCreated());
         mockMvc.perform(
@@ -557,7 +557,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
-                                .param("path", "dir")
+                                .param("path", "dir/")
                                 .session(session))
                 .andExpect(status().isCreated());
         mockMvc.perform(
@@ -665,7 +665,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
-                                .param("path", "dir")
+                                .param("path", "dir/")
                                 .session(session))
                 .andExpect(status().isCreated());
         mockMvc.perform(
