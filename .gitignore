@@ -77,7 +77,6 @@ test-output/
 
 # Local data files
 application-local.properties
-application-test-local.properties
 src/main/resources/hibernate.cfg.xml
 
 # Package files

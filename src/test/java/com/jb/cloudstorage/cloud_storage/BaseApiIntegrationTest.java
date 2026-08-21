@@ -14,9 +14,12 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.containers.MinIOContainer;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -45,6 +48,28 @@ public abstract class BaseApiIntegrationTest {
             MediaType.TEXT_PLAIN_VALUE,
             content
     );
+
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
+
+    static MinIOContainer minio = new MinIOContainer("minio/minio:latest")
+            .withUserName("test")
+            .withPassword("test_password");
+
+    static {
+        postgres.start();
+        minio.start();
+    }
+
+    @DynamicPropertySource
+    static void s3Properties(DynamicPropertyRegistry registry) {
+        registry.add("minio.endpoint", () -> minio.getS3URL());
+        registry.add("minio.access-key", minio::getUserName);
+        registry.add("minio.secret-key", minio::getPassword);
+        registry.add("minio.bucket", () -> "user-files");
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+    }
 
     @BeforeEach
     void setUp() {
