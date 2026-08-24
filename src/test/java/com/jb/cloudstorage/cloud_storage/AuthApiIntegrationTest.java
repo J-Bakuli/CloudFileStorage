@@ -142,35 +142,28 @@ public class AuthApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testSignIn_success() throws Exception {
-        basicSignUpAndSessionCookie();
+        Cookie cookie = basicSignUpAndSessionCookie();
+        basicSignOut(cookie);
         basicSignIn();
     }
 
     @Test
     void testAuthenticatedPrincipal_success() throws Exception {
-        basicSignUpAndSessionCookie();
-        Cookie cookie = basicSignIn();
+        Cookie cookie = basicSignUpAndSessionCookie();
         uploadBasicFile(cookie);
         basicSignOut(cookie);
 
         String username = "AlexanderPushkin";
         String password = "%shsHjsn45S";
         SignUpRequest signUpRequest = new SignUpRequest(username, password);
-        mockMvc.perform(
+        MvcResult signUpResult = mockMvc.perform(
                         post("/api/auth/sign-up")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(signUpRequest)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.username", is(username)));
-
-        SignInRequest signInRequest = new SignInRequest(username, password);
-        MvcResult signInResult = mockMvc.perform(
-                        post("/api/auth/sign-in")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(signInRequest)))
-                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username", is(username)))
                 .andReturn();
-        cookie = getCookieFromMvcResult(signInResult);
+        cookie = getCookieFromMvcResult(signUpResult);
         mockMvc.perform(
                         get("/api/user/me")
                                 .cookie(cookie))
@@ -230,8 +223,7 @@ public class AuthApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testSignOut_UserMe_success() throws Exception {
-        basicSignUpAndSessionCookie();
-        Cookie cookie = basicSignIn();
+        Cookie cookie = basicSignUpAndSessionCookie();
         basicGetUserMe(cookie);
         basicSignOut(cookie);
         mockMvc.perform(
@@ -246,8 +238,7 @@ public class AuthApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testSignOut_unauthorized() throws Exception {
-        basicSignUpAndSessionCookie();
-        Cookie cookie = basicSignIn();
+        Cookie cookie = basicSignUpAndSessionCookie();
         basicGetUserMe(cookie);
         basicSignOut(cookie);
         mockMvc.perform(
