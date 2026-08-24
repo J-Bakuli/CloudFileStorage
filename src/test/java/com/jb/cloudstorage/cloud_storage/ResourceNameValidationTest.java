@@ -1,5 +1,6 @@
 package com.jb.cloudstorage.cloud_storage;
 
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.MediaType;
@@ -28,7 +29,7 @@ public class ResourceNameValidationTest extends BaseApiIntegrationTest {
             "file.txt "
     })
     void testUploadResource_invalid_fileName(String fileName) throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         MockMultipartFile file = new MockMultipartFile(
                 "object",
                 fileName,
@@ -39,7 +40,7 @@ public class ResourceNameValidationTest extends BaseApiIntegrationTest {
                         multipart("/api/resource")
                                 .file(file)
                                 .param("path", "")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("Invalid filename"));

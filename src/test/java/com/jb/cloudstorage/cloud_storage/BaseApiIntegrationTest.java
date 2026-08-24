@@ -3,23 +3,23 @@ package com.jb.cloudstorage.cloud_storage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jb.cloudstorage.cloud_storage.dto.SignInRequest;
 import com.jb.cloudstorage.cloud_storage.dto.SignUpRequest;
-import org.junit.jupiter.api.BeforeEach;
+import jakarta.servlet.http.Cookie;
+import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MinIOContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.utility.DockerImageName;
 
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -31,7 +31,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 @SpringBootTest
-@EnableAutoConfiguration(exclude = {RedisAutoConfiguration.class, RedisRepositoriesAutoConfiguration.class})
 @Transactional
 public abstract class BaseApiIntegrationTest {
     @Autowired
@@ -40,7 +39,6 @@ public abstract class BaseApiIntegrationTest {
     protected ObjectMapper objectMapper;
     protected static final String BASIC_USERNAME = "CloudFileStorage";
     protected static final String BASIC_PASSWORD = "password123";
-    protected MockHttpSession session;
     protected final byte[] content = "hello".getBytes();
     protected final MockMultipartFile file = new MockMultipartFile(
             "object",
@@ -55,9 +53,13 @@ public abstract class BaseApiIntegrationTest {
             .withUserName("test")
             .withPassword("test_password");
 
+    static GenericContainer redis = new GenericContainer(DockerImageName.parse("redis:latest"))
+            .withExposedPorts(6379);
+
     static {
         postgres.start();
         minio.start();
+        redis.start();
     }
 
     @DynamicPropertySource
@@ -69,69 +71,75 @@ public abstract class BaseApiIntegrationTest {
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
+        registry.add("spring.data.redis.host", redis::getHost);
+        registry.add("spring.data.redis.port", redis::getFirstMappedPort);
+        registry.add("spring.data.redis.password", () -> "");
     }
 
-    @BeforeEach
-    void setUp() {
-        session = new MockHttpSession();
-    }
-
-    void basicSignUp() throws Exception {
+    Cookie basicSignUpAndSessionCookie() throws Exception {
         SignUpRequest signUp = new SignUpRequest(BASIC_USERNAME, BASIC_PASSWORD);
-        mockMvc.perform(
+        MvcResult mvcResult = mockMvc.perform(
                         post("/api/auth/sign-up")
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(signUp))
-                                .session(session))
+                                .content(objectMapper.writeValueAsString(signUp)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.username", is(BASIC_USERNAME)));
+                .andExpect(jsonPath("$.username", is(BASIC_USERNAME)))
+                .andReturn();
+        return getCookieFromMvcResult(mvcResult);
     }
 
-    void basicSignIn() throws Exception {
+    Cookie basicSignIn() throws Exception {
         SignInRequest signInRequest = new SignInRequest(BASIC_USERNAME, BASIC_PASSWORD);
-        mockMvc.perform(
+        MvcResult mvcResult = mockMvc.perform(
                         post("/api/auth/sign-in")
-                                .session(session)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(signInRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username", is(BASIC_USERNAME)));
+                .andExpect(jsonPath("$.username", is(BASIC_USERNAME)))
+                .andReturn();
+        return getCookieFromMvcResult(mvcResult);
     }
 
-    void uploadBasicFile() throws Exception {
+    void uploadBasicFile(Cookie cookie) throws Exception {
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
                                 .param("path", "exam/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
     }
 
-    void basicSignOut() throws Exception {
+    void basicSignOut(Cookie cookie) throws Exception {
         mockMvc.perform(
                         post("/api/auth/sign-out")
-                                .session(session)
+                                .cookie(cookie)
                                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
     }
 
-    void basicGetUserMe() throws Exception {
+    void basicGetUserMe(Cookie cookie) throws Exception {
         mockMvc.perform(
                         get("/api/user/me")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username", is(BASIC_USERNAME)));
     }
 
-    void getBasicFile() throws Exception {
+    void getBasicFile(Cookie cookie) throws Exception {
         mockMvc.perform(
                         get("/api/resource")
                                 .param("path", "exam/test.txt")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.path").value("exam/"))
                 .andExpect(jsonPath("$.name").value("test.txt"))
                 .andExpect(jsonPath("$.size").value(content.length))
                 .andExpect(jsonPath("$.type").value("FILE"));
+    }
+
+    protected Cookie getCookieFromMvcResult(MvcResult mvcResult) {
+        Cookie cookie = mvcResult.getResponse().getCookie("SESSION");
+        Assertions.assertNotNull(cookie, "SESSION cookie missing");
+        return cookie;
     }
 }

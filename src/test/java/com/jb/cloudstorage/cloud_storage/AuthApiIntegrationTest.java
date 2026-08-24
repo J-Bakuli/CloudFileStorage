@@ -2,11 +2,12 @@ package com.jb.cloudstorage.cloud_storage;
 
 import com.jb.cloudstorage.cloud_storage.dto.SignInRequest;
 import com.jb.cloudstorage.cloud_storage.dto.SignUpRequest;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpSession;
+import org.springframework.test.web.servlet.MvcResult;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
@@ -141,45 +142,44 @@ public class AuthApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testSignIn_success() throws Exception {
-        basicSignUp();
+        basicSignUpAndSessionCookie();
         basicSignIn();
     }
 
     @Test
     void testAuthenticatedPrincipal_success() throws Exception {
-        basicSignUp();
-        basicSignIn();
-        uploadBasicFile();
-        basicSignOut();
+        basicSignUpAndSessionCookie();
+        Cookie cookie = basicSignIn();
+        uploadBasicFile(cookie);
+        basicSignOut(cookie);
 
         String username = "AlexanderPushkin";
         String password = "%shsHjsn45S";
-        session = new MockHttpSession();
         SignUpRequest signUpRequest = new SignUpRequest(username, password);
         mockMvc.perform(
                         post("/api/auth/sign-up")
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(signUpRequest))
-                                .session(session))
+                                .content(objectMapper.writeValueAsString(signUpRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.username", is(username)));
 
         SignInRequest signInRequest = new SignInRequest(username, password);
-        mockMvc.perform(
+        MvcResult signInResult = mockMvc.perform(
                         post("/api/auth/sign-in")
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(signInRequest))
-                                .session(session))
-                .andExpect(status().isOk());
+                                .content(objectMapper.writeValueAsString(signInRequest)))
+                .andExpect(status().isOk())
+                .andReturn();
+        cookie = getCookieFromMvcResult(signInResult);
         mockMvc.perform(
                         get("/api/user/me")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username", is(username)));
         mockMvc.perform(
                         get("/api/resource")
                                 .param("path", "exam/test.txt")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isNotFound());
     }
 
@@ -197,7 +197,7 @@ public class AuthApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testSignIn_wrongPassword() throws Exception {
-        basicSignUp();
+        basicSignUpAndSessionCookie();
         String password = "AAAAAAAAAAAA";
         SignInRequest signInRequest = new SignInRequest(BASIC_USERNAME, password);
         mockMvc.perform(
@@ -230,13 +230,13 @@ public class AuthApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testSignOut_UserMe_success() throws Exception {
-        basicSignUp();
-        basicSignIn();
-        basicGetUserMe();
-        basicSignOut();
+        basicSignUpAndSessionCookie();
+        Cookie cookie = basicSignIn();
+        basicGetUserMe(cookie);
+        basicSignOut(cookie);
         mockMvc.perform(
                         get("/api/user/me")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.error").value("Unauthorized"))
@@ -246,10 +246,10 @@ public class AuthApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testSignOut_unauthorized() throws Exception {
-        basicSignUp();
-        basicSignIn();
-        basicGetUserMe();
-        basicSignOut();
+        basicSignUpAndSessionCookie();
+        Cookie cookie = basicSignIn();
+        basicGetUserMe(cookie);
+        basicSignOut(cookie);
         mockMvc.perform(
                         post("/api/auth/sign-out")
                                 .contentType(MediaType.APPLICATION_JSON))

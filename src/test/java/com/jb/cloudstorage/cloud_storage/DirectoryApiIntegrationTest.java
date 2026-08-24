@@ -1,5 +1,6 @@
 package com.jb.cloudstorage.cloud_storage;
 
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -18,13 +19,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
     @Test
     void testGetDirectory_success() throws Exception {
-        basicSignUp();
-        uploadBasicFile();
-        getBasicFile();
+        Cookie cookie = basicSignUpAndSessionCookie();
+        uploadBasicFile(cookie);
+        getBasicFile(cookie);
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "exam/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].path").value("exam/"))
@@ -47,33 +48,33 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testGetDirectory_notFound() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "missing/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void testGetDirectory_invalidPath() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Invalid request"))
                 .andExpect(jsonPath("$.errors[*].message", hasItem("Invalid path")));
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk());
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "exam")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Directory path must end with /, path=exam"));
     }
@@ -92,11 +93,11 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testCreateDirectory_success() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "newdir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("newdir"))
@@ -105,7 +106,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].name").value("newdir"))
@@ -115,22 +116,22 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testCreateDirectory_invalidPath() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "newdir")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Directory path must end with /, path=newdir"));
     }
 
     @Test
     void testCreateDirectory_one_directory_per_time_success() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "level1/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("level1"))
@@ -139,7 +140,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "level1/level2/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value("level1/"))
                 .andExpect(jsonPath("$.name").value("level2"))
@@ -148,7 +149,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "level1/level2/level3/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value("level1/level2/"))
                 .andExpect(jsonPath("$.name").value("level3"))
@@ -157,7 +158,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "level1/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(1))
@@ -169,22 +170,22 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testCreateDirectory_several_directories_per_time_parentNotFound() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "level1/level2/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message", containsString("is not found")));
     }
 
     @Test
     void testCreateDirectory_sameParent_caseInsensitive_conflict() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "projects/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("projects"))
@@ -193,71 +194,71 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "projects/newdir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "projects/NEWdir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("already exists")));
     }
 
     @Test
     void testCreateDirectory_sameNameDifferentParent_success() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "projects/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "projects/newdir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "archive/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "archive/NEWDIR/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
     }
 
     @Test
     void testDownloadDirectory_notFound() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         get("/api/resource/download")
                                 .param("path", "missing/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message", containsString("is not found")));
     }
 
     @Test
     void testDownloadDirectory_notFound_acceptOctetStream() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         get("/api/resource/download")
                                 .param("path", "missing/")
                                 .accept(MediaType.APPLICATION_OCTET_STREAM)
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message", containsString("is not found")));
     }
 
     @Test
     void testDownloadDirectory_success() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "newdir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("newdir"))
@@ -267,12 +268,12 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                         multipart("/api/resource")
                                 .file(file)
                                 .param("path", "newdir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         MvcResult result = mockMvc.perform(
                         get("/api/resource/download")
                                 .param("path", "newdir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", containsString("application/zip")))
                 .andExpect(jsonPath("$.size").doesNotExist())
@@ -295,35 +296,35 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testMoveDirectory_notFound() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/resource/move")
                                 .param("from", "exam/")
                                 .param("to", "test/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message", containsString("is not found")));
     }
 
     @Test
     void testMoveDirectory_resource_type_change() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "exam1/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/resource/move")
                                 .param("from", "exam1/")
                                 .param("to", "exam1")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", containsString("Invalid operation request")));
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("exam1"))
                 .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
@@ -331,11 +332,11 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testMoveDirectory_conflict() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "dir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("dir"))
@@ -344,7 +345,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "newdir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("newdir"))
@@ -354,18 +355,18 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                         post("/api/resource/move")
                                 .param("from", "dir/")
                                 .param("to", "newdir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("already exists")));
     }
 
     @Test
     void testMoveDirectory_conflict_caseInsensitiveName() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "dir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("dir"))
@@ -374,7 +375,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "newdir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("newdir"))
@@ -384,39 +385,39 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                         post("/api/resource/move")
                                 .param("from", "dir/")
                                 .param("to", "NEWDIR/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("already exists")));
     }
 
     @Test
     void testMoveDirectory_sameNameDifferentParent_caseInsensitive_success() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "projects/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "projects/newdir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "archive/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "dir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/resource/move")
                                 .param("from", "dir/")
                                 .param("to", "archive/NEWDIR/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.path").value("archive/"))
                 .andExpect(jsonPath("$.name").value("NEWDIR"))
@@ -425,23 +426,23 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testMoveDirectory_sameNameAsFile_differentType_success() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
                                 .param("path", "")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "dir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/resource/move")
                                 .param("from", "dir/")
                                 .param("to", "TEST.TXT/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("TEST.TXT"))
@@ -450,28 +451,28 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testMoveDirectory_moveParentToChild_badRequest() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "exam1/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "exam1/exam2/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/resource/move")
                                 .param("from", "exam1/")
                                 .param("to", "exam1/exam2/exam1/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", containsString("Invalid operation request, cannot move")));
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "exam1/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("exam2"))
                 .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
@@ -479,23 +480,23 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testMoveDirectory_samePath_badRequest() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "exam1/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/resource/move")
                                 .param("from", "exam1/")
                                 .param("to", "exam1/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", containsString("Invalid operation request, cannot move")));
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("exam1"))
                 .andExpect(jsonPath("$[0].type").value("DIRECTORY"));
@@ -503,11 +504,11 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testMoveDirectory_move_success() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "dir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("dir"))
@@ -517,13 +518,13 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                         multipart("/api/resource")
                                 .file(file)
                                 .param("path", "dir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/resource/move")
                                 .param("from", "dir/")
                                 .param("to", "exam/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("exam"))
@@ -532,23 +533,23 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         get("/api/resource")
                                 .param("path", "dir/test.txt")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isNotFound());
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "dir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isNotFound());
-        getBasicFile();
+        getBasicFile(cookie);
     }
 
     @Test
     void testMoveDirectory_rename_success() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "dir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("dir"))
@@ -558,13 +559,13 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                         multipart("/api/resource")
                                 .file(file)
                                 .param("path", "dir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/resource/move")
                                 .param("from", "dir/")
                                 .param("to", "exam/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("exam"))
@@ -573,55 +574,55 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         get("/api/resource")
                                 .param("path", "dir/test.txt")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isNotFound());
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "dir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isNotFound());
-        getBasicFile();
+        getBasicFile(cookie);
     }
 
     @Test
     void testMoveDirectory_rename_similarPrefix_success() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "exam1/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/resource/move")
                                 .param("from", "exam1/")
                                 .param("to", "exam12/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk());
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "exam12/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk());
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "exam1/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void testMoveDirectory_rename_caseInsensitiveRename() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "exam1/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/resource/move")
                                 .param("from", "exam1/")
                                 .param("to", "eXAm1/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("eXAm1"))
@@ -630,12 +631,12 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "exam1/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isNotFound());
         mockMvc.perform(
                         get("/api/resource")
                                 .param("path", "eXAm1/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("eXAm1"))
                 .andExpect(jsonPath("$.type").value("DIRECTORY"));
@@ -643,11 +644,11 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testMoveDirectory_intoParent_success() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "other/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("other"))
@@ -656,7 +657,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "dir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("dir"))
@@ -666,13 +667,13 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                         multipart("/api/resource")
                                 .file(file)
                                 .param("path", "dir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         post("/api/resource/move")
                                 .param("from", "dir/")
                                 .param("to", "other/dir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.path").value("other/"))
                 .andExpect(jsonPath("$.name").value("dir"))
@@ -681,17 +682,17 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         get("/api/resource")
                                 .param("path", "dir/test.txt")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isNotFound());
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "dir/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isNotFound());
         mockMvc.perform(
                         get("/api/resource")
                                 .param("path", "other/dir/test.txt")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.path").value("other/dir/"))
                 .andExpect(jsonPath("$.name").value("test.txt"))
@@ -700,22 +701,22 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testDirectoryMerge_success() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "data/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
                                 .param("path", "data/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "data/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].path").value("data/"))
@@ -726,24 +727,24 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testDirectoryMerge_conflictFile() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
                                 .param("path", "data/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
                                 .param("path", "data/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("File already exists, path=data/test.txt"));
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "data/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].path").value("data/"))
@@ -754,7 +755,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testDirectoryMerge_twoFilesInOneQuery_success() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         MockMultipartFile file1 = new MockMultipartFile(
                 "object",
                 "cat.txt",
@@ -766,12 +767,12 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
                                 .file(file)
                                 .file(file1)
                                 .param("path", "data/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "data/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].path").value("data/"))
@@ -786,7 +787,7 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
     void testDirectoryMerge_nestedRelativeFilename_success() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         MockMultipartFile file = new MockMultipartFile(
                 "object",
                 "data/extra.txt",
@@ -796,18 +797,18 @@ public class DirectoryApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "data/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         multipart("/api/resource")
                                 .file(file)
                                 .param("path", "")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isCreated());
         mockMvc.perform(
                         get("/api/directory")
                                 .param("path", "data/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].path").value("data/"))

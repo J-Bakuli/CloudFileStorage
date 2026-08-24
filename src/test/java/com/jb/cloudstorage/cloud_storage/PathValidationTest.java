@@ -1,5 +1,6 @@
 package com.jb.cloudstorage.cloud_storage;
 
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -25,11 +26,11 @@ public class PathValidationTest extends BaseApiIntegrationTest {
             "exam/ file.txt"
     })
     void testGetResource_invalidPaths(String path) throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         get("/api/resource")
                                 .param("path", path)
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", containsString("Invalid request")))
                 .andExpect(jsonPath("$.errors[*].message", hasItem("Invalid path")));
@@ -37,13 +38,13 @@ public class PathValidationTest extends BaseApiIntegrationTest {
 
     @Test
     void testResourceEndpoints_pathWithParentTraversal() throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         String invalidPath = "../user-1-files/main.txt";
 
         mockMvc.perform(
                         get("/api/resource/download")
                                 .param("path", invalidPath)
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", containsString("Invalid request")))
                 .andExpect(jsonPath("$.errors[*].message", hasItem("Invalid path")));
@@ -52,7 +53,7 @@ public class PathValidationTest extends BaseApiIntegrationTest {
                         post("/api/resource/move")
                                 .param("from", invalidPath)
                                 .param("to", "stolen.txt")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", containsString("Invalid request")))
                 .andExpect(jsonPath("$.errors[*].message", hasItem("Invalid path")));
@@ -61,7 +62,7 @@ public class PathValidationTest extends BaseApiIntegrationTest {
                         post("/api/resource/move")
                                 .param("from", "secret.txt")
                                 .param("to", invalidPath)
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", containsString("Invalid request")))
                 .andExpect(jsonPath("$.errors[*].message", hasItem("Invalid path")));
@@ -69,7 +70,7 @@ public class PathValidationTest extends BaseApiIntegrationTest {
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", "../user-1-files/secret/")
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", containsString("Invalid request")))
                 .andExpect(jsonPath("$.errors[*].message", hasItem("Invalid path")));
@@ -87,11 +88,11 @@ public class PathValidationTest extends BaseApiIntegrationTest {
             "exam /"
     })
     void testCreateDirectory_invalid_path(String path) throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/directory")
                                 .param("path", path)
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("Invalid request"))
@@ -108,12 +109,12 @@ public class PathValidationTest extends BaseApiIntegrationTest {
             "x|y.txt"
     })
     void testMove_invalid_path(String path) throws Exception {
-        basicSignUp();
+        Cookie cookie = basicSignUpAndSessionCookie();
         mockMvc.perform(
                         post("/api/resource/move")
                                 .param("from", "secret.txt")
                                 .param("to", path)
-                                .session(session))
+                                .cookie(cookie))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", containsString("Invalid request")))
                 .andExpect(jsonPath("$.errors[*].message", hasItem("Invalid path")));
